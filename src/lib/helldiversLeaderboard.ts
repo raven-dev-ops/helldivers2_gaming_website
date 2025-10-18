@@ -567,7 +567,7 @@ export async function fetchHelldiversLeaderboard(options?: {
         avgDeaths: 1,
       },
     });
-  } else {
+  } else if (scope === 'lifetime') {
     // Lifetime scope: union of Lifetime_Stats (all historical) + current month User_Stats
     // This keeps historical data compact in Lifetime_Stats while including in‑progress stats from User_Stats.
     const lifetimePipeline: any[] = [];
@@ -772,14 +772,14 @@ export async function fetchHelldiversLeaderboard(options?: {
     return { sortBy, sortDir, limit, results: formatted };
   }
 
+  // At this point, 'lifetime' scope has already been handled and returned above,
+  // so we only need to switch between Solo/Squad and default to User_Stats.
   const collectionName =
-    scope === 'lifetime'
-      ? 'User_Stats'
-      : scope === 'solo'
-        ? 'Solo_Stats'
-        : scope === 'squad'
-          ? 'Squad_Stats'
-          : 'User_Stats';
+    scope === 'solo'
+      ? 'Solo_Stats'
+      : scope === 'squad'
+        ? 'Squad_Stats'
+        : 'User_Stats';
   const cursor = db
     .collection(collectionName)
     .aggregate(pipeline, { allowDiskUse: true });
