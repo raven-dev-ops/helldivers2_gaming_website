@@ -2,18 +2,18 @@
 
 /* --- 1. CSS Variables (Custom Properties) for Theming --- */
 :root {
-  /* --- Dark Theme Base Colors --- */
-  --color-background: #0f172a; /* Slate 900 - Deep dark blue */
-  --color-background-alt: #1e293b; /* Slate 800 - Slightly lighter dark blue */
-  --color-surface: #1e293b; /* Slate 800 - Card/section backgrounds */
-  --color-surface-alt: #334155; /* Slate 700 - Hover states, accents */
-  --color-surface-hover: #475569; /* Slate 600 - Added for hover */
-  --color-border: #334155; /* Slate 700 - Borders */
-  --color-border-alt: #4b5563; /* Slate 600 - Subtle borders, dividers */
-  --color-text-primary: #e2e8f0; /* Slate 200 - Main text */
-  --color-text-secondary: #94a3b8; /* Slate 400 - Subdued text, descriptions */
-  --color-text-muted: #64748b; /* Slate 500 - Muted text, icons */
-  --color-text-disabled: #475569; /* Slate 600 - Disabled elements */
+  /* --- Light Theme Base Colors --- */
+  --color-background: #f8fafc; /* Slate 50 */
+  --color-background-alt: #e2e8f0; /* Slate 200 */
+  --color-surface: #ffffff; /* White cards */
+  --color-surface-alt: #f1f5f9; /* Slate 100 */
+  --color-surface-hover: #e2e8f0; /* Slate 200 */
+  --color-border: #e2e8f0; /* Slate 200 */
+  --color-border-alt: #cbd5e1; /* Slate 300 */
+  --color-text-primary: #0f172a; /* Slate 900 */
+  --color-text-secondary: #334155; /* Slate 700 */
+  --color-text-muted: #64748b; /* Slate 500 */
+  --color-text-disabled: #94a3b8; /* Slate 400 */
 
   /* --- Primary Accent Colors (Example: Helldivers Yellow) --- */
   /* Adjust these if another theme (like Dune) should be default */
@@ -61,7 +61,7 @@
   --border-width: 1px;
 
   /* --- Color Scheme --- */
-  color-scheme: dark;
+  color-scheme: light;
 
   /* --- Swiper Variables --- */
   --swiper-navigation-size: 36px;
@@ -105,4 +105,20 @@ strong{font-weight:600;color:var(--color-text-primary);}
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce){
   *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}
+}
+
+/* Dark theme overrides (when html has class="dark") */
+.dark {
+  --color-background: #0f172a; /* Slate 900 */
+  --color-background-alt: #1e293b; /* Slate 800 */
+  --color-surface: #1e293b; /* Slate 800 */
+  --color-surface-alt: #334155; /* Slate 700 */
+  --color-surface-hover: #475569; /* Slate 600 */
+  --color-border: #334155; /* Slate 700 */
+  --color-border-alt: #4b5563; /* Slate 600 */
+  --color-text-primary: #e2e8f0; /* Slate 200 */
+  --color-text-secondary: #94a3b8; /* Slate 400 */
+  --color-text-muted: #64748b; /* Slate 500 */
+  --color-text-disabled: #475569; /* Slate 600 */
+  color-scheme: dark;
 }

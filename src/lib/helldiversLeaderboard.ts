@@ -7,6 +7,9 @@ export const VALID_SORT_FIELDS = [
   'Shots Fired',
   'Shots Hit',
   'Deaths',
+  'Melee Kills',
+  'Stims Used',
+  'Strats Used',
   'player_name',
   'clan_name',
   'submitted_at',
@@ -117,6 +120,30 @@ export async function fetchHelldiversLeaderboard(options?: {
             ],
           },
         },
+        numericMeleeKills: {
+          $toDouble: {
+            $ifNull: [
+              { $getField: { field: 'Melee Kills', input: '$$ROOT' } },
+              0,
+            ],
+          },
+        },
+        numericStimsUsed: {
+          $toDouble: {
+            $ifNull: [
+              { $getField: { field: 'Stims Used', input: '$$ROOT' } },
+              0,
+            ],
+          },
+        },
+        numericStratsUsed: {
+          $toDouble: {
+            $ifNull: [
+              { $getField: { field: 'Strats Used', input: '$$ROOT' } },
+              0,
+            ],
+          },
+        },
         numericAccuracy: {
           $toDouble: {
             $replaceAll: {
@@ -142,6 +169,7 @@ export async function fetchHelldiversLeaderboard(options?: {
           },
         },
         memberKey: { $toString: { $ifNull: ['$discord_id', '$player_name'] } },
+        sesTitle: { $ifNull: [{ $getField: { field: 'SES', input: '$$ROOT' } }, null] },
       },
     },
   ];
@@ -159,23 +187,62 @@ export async function fetchHelldiversLeaderboard(options?: {
     const { start, end } = getMonthRange(monthProvided - 1, yearProvided);
     pipeline.push({ $match: { submittedAtDate: { $gte: start, $lt: end } } });
 
+    pipeline.push({
+      $group: {
+        _id: '$memberKey',
+        player_name: { $first: '$player_name' },
+        clan_name: { $first: '$clan_name' },
+        discord_id: { $first: '$discord_id' },
+        discord_server_id: { $first: '$discord_server_id' },
+        lastSubmittedAt: { $max: '$submittedAtDate' },
+        totalKills: { $sum: '$numericKills' },
+        totalDeaths: { $sum: '$numericDeaths' },
+        totalShotsFired: { $sum: '$numericShotsFired' },
+        totalShotsHit: { $sum: '$numericShotsHit' },
+        totalMeleeKills: { $sum: '$numericMeleeKills' },
+        totalStimsUsed: { $sum: '$numericStimsUsed' },
+        totalStratsUsed: { $sum: '$numericStratsUsed' },
+        sesTitle: { $last: '$sesTitle' },
+      },
+    });
+    pipeline.push({
+      $addFields: {
+        accuracyPct: {
+          $cond: [
+            { $gt: ['$totalShotsFired', 0] },
+            { $multiply: [{ $divide: ['$totalShotsHit', '$totalShotsFired'] }, 100] },
+            0,
+          ],
+        },
+      },
+    });
+
     const sortStage: Record<string, 1 | -1> = {};
     const dir: 1 | -1 = sortDir === 'asc' ? 1 : -1;
     switch (sortBy) {
       case 'Kills':
-        sortStage['numericKills'] = dir;
+        sortStage['totalKills'] = dir;
         break;
       case 'Accuracy':
-        sortStage['numericAccuracy'] = dir;
+        sortStage['accuracyPct'] = dir;
         break;
       case 'Shots Fired':
-        sortStage['numericShotsFired'] = dir;
+        sortStage['totalShotsFired'] = dir;
         break;
       case 'Shots Hit':
-        sortStage['numericShotsHit'] = dir;
+        sortStage['totalShotsHit'] = dir;
         break;
       case 'Deaths':
-        sortStage['numericDeaths'] = dir;
+        sortStage['totalDeaths'] = dir;
+        break;
+      case 'Melee Kills':
+        sortStage['totalMeleeKills'] = dir;
+        break;
+      case 'Stims Used':
+        sortStage['totalStimsUsed'] = dir;
+        break;
+      case 'Strats Used':
+        sortStage['totalStratsUsed'] = dir;
         break;
       case 'player_name':
         sortStage['player_name'] = dir;
@@ -184,10 +251,10 @@ export async function fetchHelldiversLeaderboard(options?: {
         sortStage['clan_name'] = dir;
         break;
       case 'submitted_at':
-        sortStage['submittedAtDate'] = dir;
+        sortStage['lastSubmittedAt'] = dir;
         break;
       default:
-        sortStage['numericKills'] = dir;
+        sortStage['totalKills'] = dir;
         break;
     }
 
@@ -197,22 +264,19 @@ export async function fetchHelldiversLeaderboard(options?: {
       $project: {
         _id: 1,
         player_name: 1,
-        Kills: 1,
-        Accuracy: 1,
-        'Shots Fired': 1,
-        'Shots Hit': 1,
-        Deaths: 1,
+        clan_name: 1,
         discord_id: 1,
         discord_server_id: 1,
-        clan_name: 1,
-        submitted_by: 1,
-        submitted_at: 1,
-        numericKills: 1,
-        numericAccuracy: 1,
-        numericShotsFired: 1,
-        numericShotsHit: 1,
-        numericDeaths: 1,
-        submittedAtDate: 1,
+        submitted_at: '$lastSubmittedAt',
+        Kills: '$totalKills',
+        Deaths: '$totalDeaths',
+        'Shots Fired': '$totalShotsFired',
+        'Shots Hit': '$totalShotsHit',
+        MeleeKills: '$totalMeleeKills',
+        StimsUsed: '$totalStimsUsed',
+        StratsUsed: '$totalStratsUsed',
+        accuracyPct: 1,
+        sesTitle: 1,
       },
     });
   } else if (scope === 'day') {
@@ -221,23 +285,62 @@ export async function fetchHelldiversLeaderboard(options?: {
     start.setUTCDate(end.getUTCDate() - 1);
     pipeline.push({ $match: { submittedAtDate: { $gte: start, $lt: end } } });
 
+    pipeline.push({
+      $group: {
+        _id: '$memberKey',
+        player_name: { $first: '$player_name' },
+        clan_name: { $first: '$clan_name' },
+        discord_id: { $first: '$discord_id' },
+        discord_server_id: { $first: '$discord_server_id' },
+        lastSubmittedAt: { $max: '$submittedAtDate' },
+        totalKills: { $sum: '$numericKills' },
+        totalDeaths: { $sum: '$numericDeaths' },
+        totalShotsFired: { $sum: '$numericShotsFired' },
+        totalShotsHit: { $sum: '$numericShotsHit' },
+        totalMeleeKills: { $sum: '$numericMeleeKills' },
+        totalStimsUsed: { $sum: '$numericStimsUsed' },
+        totalStratsUsed: { $sum: '$numericStratsUsed' },
+        sesTitle: { $last: '$sesTitle' },
+      },
+    });
+    pipeline.push({
+      $addFields: {
+        accuracyPct: {
+          $cond: [
+            { $gt: ['$totalShotsFired', 0] },
+            { $multiply: [{ $divide: ['$totalShotsHit', '$totalShotsFired'] }, 100] },
+            0,
+          ],
+        },
+      },
+    });
+
     const sortStage: Record<string, 1 | -1> = {};
     const dir: 1 | -1 = sortDir === 'asc' ? 1 : -1;
     switch (sortBy) {
       case 'Kills':
-        sortStage['numericKills'] = dir;
+        sortStage['totalKills'] = dir;
         break;
       case 'Accuracy':
-        sortStage['numericAccuracy'] = dir;
+        sortStage['accuracyPct'] = dir;
         break;
       case 'Shots Fired':
-        sortStage['numericShotsFired'] = dir;
+        sortStage['totalShotsFired'] = dir;
         break;
       case 'Shots Hit':
-        sortStage['numericShotsHit'] = dir;
+        sortStage['totalShotsHit'] = dir;
         break;
       case 'Deaths':
-        sortStage['numericDeaths'] = dir;
+        sortStage['totalDeaths'] = dir;
+        break;
+      case 'Melee Kills':
+        sortStage['totalMeleeKills'] = dir;
+        break;
+      case 'Stims Used':
+        sortStage['totalStimsUsed'] = dir;
+        break;
+      case 'Strats Used':
+        sortStage['totalStratsUsed'] = dir;
         break;
       case 'player_name':
         sortStage['player_name'] = dir;
@@ -246,10 +349,10 @@ export async function fetchHelldiversLeaderboard(options?: {
         sortStage['clan_name'] = dir;
         break;
       case 'submitted_at':
-        sortStage['submittedAtDate'] = dir;
+        sortStage['lastSubmittedAt'] = dir;
         break;
       default:
-        sortStage['numericKills'] = dir;
+        sortStage['totalKills'] = dir;
         break;
     }
 
@@ -259,22 +362,19 @@ export async function fetchHelldiversLeaderboard(options?: {
       $project: {
         _id: 1,
         player_name: 1,
-        Kills: 1,
-        Accuracy: 1,
-        'Shots Fired': 1,
-        'Shots Hit': 1,
-        Deaths: 1,
+        clan_name: 1,
         discord_id: 1,
         discord_server_id: 1,
-        clan_name: 1,
-        submitted_by: 1,
-        submitted_at: 1,
-        numericKills: 1,
-        numericAccuracy: 1,
-        numericShotsFired: 1,
-        numericShotsHit: 1,
-        numericDeaths: 1,
-        submittedAtDate: 1,
+        submitted_at: '$lastSubmittedAt',
+        Kills: '$totalKills',
+        Deaths: '$totalDeaths',
+        'Shots Fired': '$totalShotsFired',
+        'Shots Hit': '$totalShotsHit',
+        MeleeKills: '$totalMeleeKills',
+        StimsUsed: '$totalStimsUsed',
+        StratsUsed: '$totalStratsUsed',
+        accuracyPct: 1,
+        sesTitle: 1,
       },
     });
   } else if (scope === 'week') {
@@ -283,23 +383,53 @@ export async function fetchHelldiversLeaderboard(options?: {
     start.setUTCDate(end.getUTCDate() - 7);
     pipeline.push({ $match: { submittedAtDate: { $gte: start, $lt: end } } });
 
+    pipeline.push({
+      $group: {
+        _id: '$memberKey',
+        player_name: { $first: '$player_name' },
+        clan_name: { $first: '$clan_name' },
+        discord_id: { $first: '$discord_id' },
+        discord_server_id: { $first: '$discord_server_id' },
+        lastSubmittedAt: { $max: '$submittedAtDate' },
+        totalKills: { $sum: '$numericKills' },
+        totalDeaths: { $sum: '$numericDeaths' },
+        totalShotsFired: { $sum: '$numericShotsFired' },
+        totalShotsHit: { $sum: '$numericShotsHit' },
+        totalMeleeKills: { $sum: '$numericMeleeKills' },
+        totalStimsUsed: { $sum: '$numericStimsUsed' },
+        totalStratsUsed: { $sum: '$numericStratsUsed' },
+        sesTitle: { $last: '$sesTitle' },
+      },
+    });
+    pipeline.push({
+      $addFields: {
+        accuracyPct: {
+          $cond: [
+            { $gt: ['$totalShotsFired', 0] },
+            { $multiply: [{ $divide: ['$totalShotsHit', '$totalShotsFired'] }, 100] },
+            0,
+          ],
+        },
+      },
+    });
+
     const sortStage: Record<string, 1 | -1> = {};
     const dir: 1 | -1 = sortDir === 'asc' ? 1 : -1;
     switch (sortBy) {
       case 'Kills':
-        sortStage['numericKills'] = dir;
+        sortStage['totalKills'] = dir;
         break;
       case 'Accuracy':
-        sortStage['numericAccuracy'] = dir;
+        sortStage['accuracyPct'] = dir;
         break;
       case 'Shots Fired':
-        sortStage['numericShotsFired'] = dir;
+        sortStage['totalShotsFired'] = dir;
         break;
       case 'Shots Hit':
-        sortStage['numericShotsHit'] = dir;
+        sortStage['totalShotsHit'] = dir;
         break;
       case 'Deaths':
-        sortStage['numericDeaths'] = dir;
+        sortStage['totalDeaths'] = dir;
         break;
       case 'player_name':
         sortStage['player_name'] = dir;
@@ -308,10 +438,10 @@ export async function fetchHelldiversLeaderboard(options?: {
         sortStage['clan_name'] = dir;
         break;
       case 'submitted_at':
-        sortStage['submittedAtDate'] = dir;
+        sortStage['lastSubmittedAt'] = dir;
         break;
       default:
-        sortStage['numericKills'] = dir;
+        sortStage['totalKills'] = dir;
         break;
     }
 
@@ -321,43 +451,82 @@ export async function fetchHelldiversLeaderboard(options?: {
       $project: {
         _id: 1,
         player_name: 1,
-        Kills: 1,
-        Accuracy: 1,
-        'Shots Fired': 1,
-        'Shots Hit': 1,
-        Deaths: 1,
+        clan_name: 1,
         discord_id: 1,
         discord_server_id: 1,
-        clan_name: 1,
-        submitted_by: 1,
-        submitted_at: 1,
-        numericKills: 1,
-        numericAccuracy: 1,
-        numericShotsFired: 1,
-        numericShotsHit: 1,
-        numericDeaths: 1,
-        submittedAtDate: 1,
+        submitted_at: '$lastSubmittedAt',
+        Kills: '$totalKills',
+        Deaths: '$totalDeaths',
+        'Shots Fired': '$totalShotsFired',
+        'Shots Hit': '$totalShotsHit',
+        MeleeKills: '$totalMeleeKills',
+        StimsUsed: '$totalStimsUsed',
+        StratsUsed: '$totalStratsUsed',
+        accuracyPct: 1,
+        sesTitle: 1,
       },
     });
   } else if (scope === 'solo') {
-    // Solo scope: sort like month, but do not filter by month; read from Solo_Stats collection later
+    // Solo scope: aggregate per member across Solo_Stats
+    pipeline.push({ $sort: { submittedAtDate: 1 } });
+    pipeline.push({
+      $group: {
+        _id: '$memberKey',
+        player_name: { $last: '$player_name' },
+        clan_name: { $last: '$clan_name' },
+        discord_id: { $last: '$discord_id' },
+        discord_server_id: { $last: '$discord_server_id' },
+        submitted_by: { $last: '$submitted_by' },
+        lastSubmittedAt: { $last: '$submittedAtDate' },
+        totalKills: { $sum: '$numericKills' },
+        totalShotsFired: { $sum: '$numericShotsFired' },
+        totalShotsHit: { $sum: '$numericShotsHit' },
+        totalDeaths: { $sum: '$numericDeaths' },
+        totalMeleeKills: { $sum: '$numericMeleeKills' },
+        totalStimsUsed: { $sum: '$numericStimsUsed' },
+        totalStratsUsed: { $sum: '$numericStratsUsed' },
+        sesTitle: { $last: '$sesTitle' },
+        submissionsCount: { $sum: 1 },
+      },
+    });
+    pipeline.push({
+      $addFields: {
+        accuracyPct: {
+          $cond: [
+            { $gt: ['$totalShotsFired', 0] },
+            { $multiply: [{ $divide: ['$totalShotsHit', '$totalShotsFired'] }, 100] },
+            0,
+          ],
+        },
+      },
+    });
+
     const sortStage: Record<string, 1 | -1> = {};
     const dir: 1 | -1 = sortDir === 'asc' ? 1 : -1;
     switch (sortBy) {
       case 'Kills':
-        sortStage['numericKills'] = dir;
+        sortStage['totalKills'] = dir;
         break;
       case 'Accuracy':
-        sortStage['numericAccuracy'] = dir;
+        sortStage['accuracyPct'] = dir;
         break;
       case 'Shots Fired':
-        sortStage['numericShotsFired'] = dir;
+        sortStage['totalShotsFired'] = dir;
         break;
       case 'Shots Hit':
-        sortStage['numericShotsHit'] = dir;
+        sortStage['totalShotsHit'] = dir;
         break;
       case 'Deaths':
-        sortStage['numericDeaths'] = dir;
+        sortStage['totalDeaths'] = dir;
+        break;
+      case 'Melee Kills':
+        sortStage['totalMeleeKills'] = dir;
+        break;
+      case 'Stims Used':
+        sortStage['totalStimsUsed'] = dir;
+        break;
+      case 'Strats Used':
+        sortStage['totalStratsUsed'] = dir;
         break;
       case 'player_name':
         sortStage['player_name'] = dir;
@@ -366,10 +535,10 @@ export async function fetchHelldiversLeaderboard(options?: {
         sortStage['clan_name'] = dir;
         break;
       case 'submitted_at':
-        sortStage['submittedAtDate'] = dir;
+        sortStage['lastSubmittedAt'] = dir;
         break;
       default:
-        sortStage['numericKills'] = dir;
+        sortStage['totalKills'] = dir;
         break;
     }
 
@@ -379,22 +548,23 @@ export async function fetchHelldiversLeaderboard(options?: {
       $project: {
         _id: 1,
         player_name: 1,
-        Kills: 1,
-        Accuracy: 1,
-        'Shots Fired': 1,
-        'Shots Hit': 1,
-        Deaths: 1,
+        clan_name: 1,
         discord_id: 1,
         discord_server_id: 1,
-        clan_name: 1,
         submitted_by: 1,
-        submitted_at: 1,
-        numericKills: 1,
-        numericAccuracy: 1,
-        numericShotsFired: 1,
-        numericShotsHit: 1,
-        numericDeaths: 1,
-        submittedAtDate: 1,
+        submitted_at: '$lastSubmittedAt',
+        Kills: '$totalKills',
+        'Shots Fired': '$totalShotsFired',
+        'Shots Hit': '$totalShotsHit',
+        Deaths: '$totalDeaths',
+        MeleeKills: '$totalMeleeKills',
+        StimsUsed: '$totalStimsUsed',
+        StratsUsed: '$totalStratsUsed',
+        accuracyPct: 1,
+        avgKills: 1,
+        avgShotsFired: 1,
+        avgShotsHit: 1,
+        avgDeaths: 1,
       },
     });
   } else {
@@ -421,6 +591,10 @@ export async function fetchHelldiversLeaderboard(options?: {
         totalShotsFired: { $sum: '$numericShotsFired' },
         totalShotsHit: { $sum: '$numericShotsHit' },
         totalDeaths: { $sum: '$numericDeaths' },
+        totalMeleeKills: { $sum: '$numericMeleeKills' },
+        totalStimsUsed: { $sum: '$numericStimsUsed' },
+        totalStratsUsed: { $sum: '$numericStratsUsed' },
+        sesTitle: { $last: '$sesTitle' },
         submissionsCount: { $sum: 1 },
       },
     });
@@ -487,6 +661,15 @@ export async function fetchHelldiversLeaderboard(options?: {
       case 'Deaths':
         sortStageLifetime['totalDeaths'] = dir;
         break;
+      case 'Melee Kills':
+        sortStageLifetime['totalMeleeKills'] = dir;
+        break;
+      case 'Stims Used':
+        sortStageLifetime['totalStimsUsed'] = dir;
+        break;
+      case 'Strats Used':
+        sortStageLifetime['totalStratsUsed'] = dir;
+        break;
       case 'player_name':
         sortStageLifetime['player_name'] = dir;
         break;
@@ -525,11 +708,13 @@ export async function fetchHelldiversLeaderboard(options?: {
         discord_server_id: 1,
         submitted_by: 1,
         submitted_at: '$lastSubmittedAt',
-        // expose totals using original field names where applicable
         Kills: '$totalKills',
         'Shots Fired': '$totalShotsFired',
         'Shots Hit': '$totalShotsHit',
         Deaths: '$totalDeaths',
+        MeleeKills: '$totalMeleeKills',
+        StimsUsed: '$totalStimsUsed',
+        StratsUsed: '$totalStratsUsed',
         accuracyPct: 1,
         avgKills: 1,
         avgShotsFired: 1,
@@ -569,11 +754,15 @@ export async function fetchHelldiversLeaderboard(options?: {
       ShotsFired: doc['Shots Fired'] ?? 0,
       ShotsHit: doc['Shots Hit'] ?? 0,
       Deaths: doc.Deaths ?? 0,
+      MeleeKills: doc.MeleeKills ?? doc['Melee Kills'] ?? 0,
+      StimsUsed: doc.StimsUsed ?? doc['Stims Used'] ?? 0,
+      StratsUsed: doc.StratsUsed ?? doc['Strats Used'] ?? 0,
       discord_id: doc.discord_id || null,
       discord_server_id: doc.discord_server_id || null,
       clan_name: doc.clan_name || '',
       submitted_by: doc.submitted_by || '',
       submitted_at: doc.submitted_at || null,
+      sesTitle: doc.sesTitle || null,
       AvgKills:
         typeof doc.avgKills === 'number' ? Number(doc.avgKills) : undefined,
       AvgShotsFired:

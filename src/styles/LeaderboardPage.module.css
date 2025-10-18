@@ -188,6 +188,9 @@
 .rankCol { width: 64px; text-align: right; color: var(--color-text-secondary); }
 .nameCol { width: 36%; border-right: 1px solid var(--color-border-alt); }
 .statCol { text-align: right; font-variant-numeric: tabular-nums; padding-right: 14px; }
+.meleeCol {}
+.stimsCol {}
+.stratsCol {}
 
 .avatar {
   width: 28px; height: 28px; border-radius: 999px;
@@ -246,7 +249,7 @@
 
 /* --- Responsive --- */
 @media (max-width: 920px) { .toolbar { flex-wrap: wrap; } .title { font-size: 20px; } }
-@media (max-width: 640px) { .container { gap: 12px; } .tabs { gap: 4px; } .tab { padding: 6px 8px; font-size: 12px; } .table { min-width: 640px; } }
+@media (max-width: 640px) { .container { gap: 12px; } .tabs { gap: 4px; } .tab { padding: 6px 8px; font-size: 12px; } .table { min-width: 860px; } }
 
 /* Alias so existing page.tsx keeps working */
 .pageContainer { 
@@ -280,6 +283,8 @@
   max-width: 320px;
   z-index: 5;
   pointer-events: none;
+  opacity: 0;
+  animation: hoverFade .2s ease-out forwards;
 }
 .hoverHeader { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .hoverAvatar {
@@ -300,4 +305,9 @@
 .avatar {
   width: 28px; height: 28px; border-radius: 999px; border: 1px solid var(--color-border);
   object-fit: cover; background: var(--color-background-alt);
+}
+
+@keyframes hoverFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

@@ -46,7 +46,7 @@ export default function SubmitCampaignModal({
     if (!campaignId || !youtubeLink.trim()) return;
     setSaving(true);
     try {
-      const res = await fetch('/api/user-applications', {
+      const res = await fetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -55,7 +55,8 @@ export default function SubmitCampaignModal({
           about: youtubeLink,
         }),
       });
-      const data = await res.json();
+      const ct = res.headers.get('content-type') || '';
+      const data = ct.includes('application/json') ? await res.json() : { message: await res.text() };
       if (!res.ok) throw new Error(data.message || 'Failed to submit');
       onSubmitted(data.message || 'Campaign submitted');
       setCampaignId('');

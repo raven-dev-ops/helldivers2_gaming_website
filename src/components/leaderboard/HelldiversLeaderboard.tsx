@@ -12,6 +12,9 @@ type SortField =
   | 'Shots Fired'
   | 'Shots Hit'
   | 'Deaths'
+  | 'Melee Kills'
+  | 'Stims Used'
+  | 'Strats Used'
   | 'player_name'
   | 'clan_name'
   | 'submitted_at'
@@ -45,6 +48,10 @@ interface LeaderboardRow {
   submitted_at?: string | Date | null;
   discord_id?: string | number | null;
   discord_server_id?: string | number | null;
+  MeleeKills?: number;
+  StimsUsed?: number;
+  StratsUsed?: number;
+  sesTitle?: string | null;
   AvgKills?: number;
   AvgShotsFired?: number;
   AvgShotsHit?: number;
@@ -66,6 +73,9 @@ const sortFieldMap: Record<SortField, keyof LeaderboardRow> = {
   'Shots Fired': 'ShotsFired',
   'Shots Hit': 'ShotsHit',
   Deaths: 'Deaths',
+  'Melee Kills': 'MeleeKills',
+  'Stims Used': 'StimsUsed',
+  'Strats Used': 'StratsUsed',
   player_name: 'player_name',
   clan_name: 'clan_name',
   submitted_at: 'submitted_at',
@@ -163,7 +173,10 @@ function LeaderboardTableSection({
       motto?: string | null;
       avatarUrl?: string | null;
     } | null;
+    pinned?: boolean;
   } | null>(null);
+  const hoverTimer = useRef<number | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let abort = new AbortController();
@@ -185,6 +198,28 @@ function LeaderboardTableSection({
     return () => abort.abort();
   }, [hover?.row?.player_name, hover?.row?.discord_id]);
 
+  // Unpin on Escape or click outside the table/card
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setHover(null);
+    };
+    const onDown = (e: MouseEvent) => {
+      if (!hover?.pinned) return;
+      const card = cardRef.current;
+      const wrap = wrapRef.current;
+      const target = e.target as Node | null;
+      if (card && target && card.contains(target)) return;
+      if (wrap && target && wrap.contains(target)) return;
+      setHover(null);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onDown, true);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onDown, true);
+    };
+  }, [hover?.pinned]);
+
   const hasAverages =
     showAverages &&
     rows.length > 0 &&
@@ -201,7 +236,7 @@ function LeaderboardTableSection({
   const totalColumns =
     2 +
     1 +
-    (showTotals ? 4 : 0) +
+    (showTotals ? 7 : 0) +
     (hasAverages ? 4 : 0);
 
   return (
@@ -259,6 +294,21 @@ function LeaderboardTableSection({
                       <HeaderButton label="Shots Hit" sortKey="Shots Hit" activeSort={activeSort} onSort={onSort} />
                     </th>
                   )}
+                  {showTotals && (
+                    <th className={`${lb.th} ${lb.statCol} ${lb.meleeCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Melee Kills" sortKey="Melee Kills" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
+                  {showTotals && (
+                    <th className={`${lb.th} ${lb.statCol} ${lb.stimsCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Stims Used" sortKey="Stims Used" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
+                  {showTotals && (
+                    <th className={`${lb.th} ${lb.statCol} ${lb.stratsCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Strats Used" sortKey="Strats Used" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
                   {hasAverages && (
                     <th className={`${lb.th} ${lb.statCol}`} style={{ textAlign: 'right' }}>
                       <HeaderButton label="Avg Shots Hit" sortKey="Avg Shots Hit" activeSort={activeSort} onSort={onSort} />
@@ -287,9 +337,26 @@ function LeaderboardTableSection({
                       const rowRect = (e.currentTarget as HTMLTableRowElement).getBoundingClientRect();
                       const x = Math.max(8, Math.min(rowRect.left - rect.left + 16, rect.width - 340));
                       const y = Math.max(8, rowRect.top - rect.top + rowRect.height + 6 - 60);
-                      setHover({ x, y, row, profile: null });
+                      if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
+                      hoverTimer.current = window.setTimeout(() => {
+                        setHover({ x, y, row, profile: null });
+                      }, 3000);
                     }}
-                    onMouseLeave={() => setHover(null)}
+                    onClick={(e) => {
+                      const container = wrapRef.current;
+                      if (!container) return;
+                      const rect = container.getBoundingClientRect();
+                      const rowRect = (e.currentTarget as HTMLTableRowElement).getBoundingClientRect();
+                      const x = Math.max(8, Math.min(rowRect.left - rect.left + 16, rect.width - 340));
+                      const y = Math.max(8, rowRect.top - rect.top + rowRect.height + 6 - 60);
+                      if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
+                      setHover({ x, y, row, profile: null, pinned: true });
+                    }}
+                    onMouseLeave={() => {
+                      if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
+                      hoverTimer.current = null;
+                      setHover((prev) => (prev?.pinned ? prev : null));
+                    }}
                     className={lb.tr}
                   >
                     <td className={`${lb.td} ${lb.rankCol}`} style={{ textAlign: 'right' }}>{row.rank}</td>
@@ -319,6 +386,21 @@ function LeaderboardTableSection({
                     {showTotals && (
                       <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>{row.ShotsHit}</td>
                     )}
+                    {showTotals && (
+                      <td className={`${lb.td} ${lb.statCol} ${lb.meleeCol}`} style={{ textAlign: 'right' }}>
+                        {row.MeleeKills ?? ''}
+                      </td>
+                    )}
+                    {showTotals && (
+                      <td className={`${lb.td} ${lb.statCol} ${lb.stimsCol}`} style={{ textAlign: 'right' }}>
+                        {row.StimsUsed ?? ''}
+                      </td>
+                    )}
+                    {showTotals && (
+                      <td className={`${lb.td} ${lb.statCol} ${lb.stratsCol}`} style={{ textAlign: 'right' }}>
+                        {row.StratsUsed ?? ''}
+                      </td>
+                    )}
                     {hasAverages && (
                       <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>
                         {typeof row.AvgShotsHit === 'number' ? row.AvgShotsHit.toFixed(1) : ''}
@@ -345,8 +427,27 @@ function LeaderboardTableSection({
             {hover && (
               <div
                 className={lb.hoverCard}
-                style={{ ['--x' as any]: `${hover.x}px`, ['--y' as any]: `${hover.y}px` }}
+                ref={cardRef}
+                style={{ ['--x' as any]: `${hover.x}px`, ['--y' as any]: `${hover.y}px`, pointerEvents: hover.pinned ? 'auto' : 'none' }}
               >
+                {hover.pinned && (
+                  <button
+                    aria-label="Close"
+                    onClick={() => setHover(null)}
+                    style={{
+                      position: 'absolute',
+                      top: 6,
+                      right: 8,
+                      background: 'transparent',
+                      color: 'var(--color-text-secondary)',
+                      border: 0,
+                      cursor: 'pointer',
+                      fontSize: 16,
+                    }}
+                  >
+                    ×
+                  </button>
+                )}
                 <div className={lb.hoverHeader}>
                   {hover.profile?.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -386,6 +487,32 @@ function LeaderboardTableSection({
                         return (k / d).toFixed(2);
                       })()}
                     </div>
+                  </div>
+                </div>
+                <div className={lb.hoverGrid} style={{ marginTop: 8 }}>
+                  <div className={lb.hoverStat}>
+                    <div className={lb.hoverStatLabel}>Shots Fired</div>
+                    <div className={lb.hoverStatValue}>{hover.row.ShotsFired}</div>
+                  </div>
+                  <div className={lb.hoverStat}>
+                    <div className={lb.hoverStatLabel}>Shots Hit</div>
+                    <div className={lb.hoverStatValue}>{hover.row.ShotsHit}</div>
+                  </div>
+                  <div className={lb.hoverStat}>
+                    <div className={lb.hoverStatLabel}>Melee Kills</div>
+                    <div className={lb.hoverStatValue}>{hover.row.MeleeKills ?? '—'}</div>
+                  </div>
+                  <div className={lb.hoverStat}>
+                    <div className={lb.hoverStatLabel}>Stims Used</div>
+                    <div className={lb.hoverStatValue}>{hover.row.StimsUsed ?? '—'}</div>
+                  </div>
+                  <div className={lb.hoverStat}>
+                    <div className={lb.hoverStatLabel}>Strats Used</div>
+                    <div className={lb.hoverStatValue}>{hover.row.StratsUsed ?? '—'}</div>
+                  </div>
+                  <div className={lb.hoverStat} title={`SES: ${hover.row.sesTitle ?? 'Unknown'} — Destroyer designation/status.`}>
+                    <div className={lb.hoverStatLabel}>SES</div>
+                    <div className={lb.hoverStatValue}>{hover.row.sesTitle ?? '—'}</div>
                   </div>
                 </div>
                 {hover.row.submitted_at ? (

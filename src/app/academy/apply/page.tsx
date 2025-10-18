@@ -34,14 +34,46 @@ export default function ApplyPage() {
   const interestCount = useMemo(() => interest.length, [interest]);
   const aboutCount = useMemo(() => about.length, [about]);
 
+  function parseTimeString(input: string): { hours: number; minutes: number } | null {
+    if (!input) return null;
+    const trimmed = input.trim();
+    // Formats: HH:MM, H:MM, HH:MM AM/PM, H:MM am/pm
+    const ampmMatch = trimmed.match(/^\s*(\d{1,2}):(\d{2})\s*([AaPp][Mm])\s*$/);
+    if (ampmMatch) {
+      let h = parseInt(ampmMatch[1], 10);
+      const m = parseInt(ampmMatch[2], 10);
+      const mer = ampmMatch[3].toUpperCase();
+      if (h === 12) h = 0;
+      if (mer === 'PM') h += 12;
+      if (h >= 0 && h < 24 && m >= 0 && m < 60) return { hours: h, minutes: m };
+      return null;
+    }
+    const hhmm = trimmed.match(/^\s*(\d{1,2}):(\d{2})\s*$/);
+    if (hhmm) {
+      const h = parseInt(hhmm[1], 10);
+      const m = parseInt(hhmm[2], 10);
+      if (h >= 0 && h < 24 && m >= 0 && m < 60) return { hours: h, minutes: m };
+      return null;
+    }
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setMessage(null);
     setError(null);
     try {
-      const interviewAvailability = new Date(`${date}T${time}`);
-      const res = await fetch('/api/user-applications', {
+      // Build a local Date from date + time (supports AM/PM)
+      const t = parseTimeString(time) ?? parseTimeString((time || '').replace('.', ':'));
+      let interviewAvailability: Date;
+      if (t && date) {
+        const [y, mo, d] = date.split('-').map((v) => parseInt(v, 10));
+        interviewAvailability = new Date(y, (mo || 1) - 1, d || 1, t.hours, t.minutes, 0, 0);
+      } else {
+        interviewAvailability = new Date(`${date}T${time}`);
+      }
+      const res = await fetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -51,9 +83,14 @@ export default function ApplyPage() {
           interviewAvailability,
         }),
       });
-      const data = await res.json();
+      const ct = res.headers.get('content-type') || '';
+      const data = ct.includes('application/json') ? await res.json() : { message: await res.text() };
       if (!res.ok) throw new Error(data.message || 'Failed to submit');
-      setMessage(data.message || 'Application submitted');
+      const friendly = new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'full',
+        timeStyle: 'short',
+      }).format(new Date(interviewAvailability));
+      setMessage(`${data.message || 'Application submitted'}. Interview target: ${friendly}.`);
       setInterest('');
       setAbout('');
       setDate('');

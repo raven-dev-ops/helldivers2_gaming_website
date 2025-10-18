@@ -200,12 +200,6 @@ export default function ProfileClient() {
   );
 
   return (
-    <div className={base.pageContainer} style={{ position: 'relative', zIndex: 0 }}>
-      <div style={overlayStyle} />
-
-      <section className="content-section" style={{ position: 'relative', zIndex: 1 }}>
-        <h2 className="content-section-title with-border-bottom">Character Sheet</h2>
-
         <div className={s.layout}>
           {/* Sidebar */}
           <aside className={s.sidebar}>
@@ -361,7 +355,5 @@ export default function ProfileClient() {
             </section>
           </main>
         </div>
-      </section>
-    </div>
   );
 }
