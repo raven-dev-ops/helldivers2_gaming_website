@@ -14,6 +14,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import useSWR from 'swr';
 import { FaTwitch } from 'react-icons/fa';
+import AwardsClient from '@/components/profile/AwardsClient';
 import base from '@/styles/Base.module.css';
 import s from '@/styles/ProfileEditForm.module.css';
 
@@ -83,6 +84,8 @@ export default function ProfileClient() {
       setLoading(false);
     })();
   }, [status]);
+
+  // Awards UI moved to reusable AwardsClient (dynamic via config)
 
   const findRankAndRow = (rows: any[], name: string) => {
     const idx = (rows || []).findIndex(
@@ -337,107 +340,14 @@ export default function ProfileClient() {
               )}
             </section>
 
-            {/* Awards */}
-            <section className={s.section}>
-              <h3 className={s.sectionTitle}>Awards</h3>
-              <div style={{ display: 'grid', gap: '1rem' }}>
-                <div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: 8,
-                    }}
-                  >
-                    <strong style={{ color: '#f59e0b' }}>Challenges</strong>
-                    <span style={{ color: '#f59e0b', fontWeight: 600 }}>
-                      {(() => {
-                        const submissions = userData?.challengeSubmissions || [];
-                        let c = 0;
-                        for (let i = 1; i <= 7; i++) {
-                          const s = submissions.find((x: any) => x.level === i);
-                          if (s && (s.youtubeUrl || s.witnessName || s.witnessDiscordId)) c++;
-                        }
-                        return `${c}/${CHALLENGE_LEVEL_LABELS.length}`;
-                      })()}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {CHALLENGE_LEVEL_LABELS.map((label, i) => {
-                      const lvl = i + 1;
-                      const s = (userData?.challengeSubmissions || []).find(
-                        (x: any) => x.level === lvl
-                      );
-                      const complete = !!(
-                        s && (s.youtubeUrl || s.witnessName || s.witnessDiscordId)
-                      );
-                      return (
-                        <span
-                          key={lvl}
-                          style={{
-                            padding: '0.35rem 0.6rem',
-                            borderRadius: 8,
-                            border: '1px solid #334155',
-                            background: complete
-                              ? 'rgba(180, 140, 0, 0.2)'
-                              : 'rgba(0,0,0,0.2)',
-                            color: complete ? '#f59e0b' : '#94a3b8',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {label}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: 8,
-                    }}
-                  >
-                    <strong style={{ color: '#f59e0b' }}>Campaign</strong>
-                    <span style={{ color: '#f59e0b', fontWeight: 600 }}>
-                      {(() => {
-                        const cs: string[] = userData?.campaignCompletions || [];
-                        const set = new Set(cs);
-                        return `${set.size}/${CAMPAIGN_MISSION_LABELS.length}`;
-                      })()}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {CAMPAIGN_MISSION_LABELS.map((label) => {
-                      const cs: string[] = userData?.campaignCompletions || [];
-                      const set = new Set(cs);
-                      const complete = set.has(label);
-                      return (
-                        <span
-                          key={label}
-                          style={{
-                            padding: '0.35rem 0.6rem',
-                            borderRadius: 8,
-                            border: '1px solid #334155',
-                            background: complete
-                              ? 'rgba(180, 140, 0, 0.2)'
-                              : 'rgba(0,0,0,0.2)',
-                            color: complete ? '#f59e0b' : '#94a3b8',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {label}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </section>
+            {/* Awards (dynamic via config) */}
+            <AwardsClient
+              challengeSubmissions={userData?.challengeSubmissions ?? []}
+              campaignCompletions={userData?.campaignCompletions ?? []}
+              challengeLabels={CHALLENGE_LEVEL_LABELS}
+              campaignLabels={CAMPAIGN_MISSION_LABELS}
+              profileName={userData?.name ?? undefined}
+            />
 
             {/* Activity */}
             <section className={s.section}>

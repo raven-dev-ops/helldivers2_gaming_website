@@ -7,6 +7,7 @@ import '@/models/User';
 import '@/models/ForumCategory';
 import '@/models/ForumThread';
 import '@/models/ForumPost';
+import '@/models/AllianceProfile';
 
 type MongooseCache = { conn: Mongoose | null; promise: Promise<Mongoose> | null };
 

@@ -24,12 +24,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const base = (process.env.NEXT_PUBLIC_MEDIA_CDN_BASE_URL || '').replace(/\/$/, '');
-  const videoSrc = `${base}/videos/gpd_background.mp4`;
+  // Prefer a local background.mp4 if present; fall back to existing gpd_background.mp4
+  // This allows consistent behavior in local/dev where only /public/videos/background.mp4 exists.
+  const videoSrc = `${base || ''}/videos/background.mp4`;
+  const fallbackVideoSrc = `${base || ''}/videos/gpd_background.mp4`;
 
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <head>
         <link rel="preload" as="video" href={videoSrc} type="video/mp4" />
+        <link rel="preload" as="video" href={fallbackVideoSrc} type="video/mp4" />
       </head>
       <body className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
         {/* Background video */}
@@ -49,6 +53,14 @@ export default function RootLayout({
             objectFit: 'cover',
             zIndex: -3,
             filter: 'brightness(0.6)',
+          }}
+          onError={(e) => {
+            const el = e.currentTarget as HTMLVideoElement;
+            if (el.src.endsWith('/videos/background.mp4')) {
+              el.src = fallbackVideoSrc;
+              el.load();
+              el.play().catch(() => {});
+            }
           }}
         />
 

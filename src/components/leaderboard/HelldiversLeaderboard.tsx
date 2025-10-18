@@ -1,8 +1,10 @@
-// src/app/components/leaderboard/HelldiversLeaderboard.tsx
+// src/components/leaderboard/HelldiversLeaderboard.tsx
 
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import base from '@/styles/Base.module.css';
+import lb from '@/styles/LeaderboardPage.module.css';
 
 type SortField =
   | 'Kills'
@@ -41,7 +43,8 @@ interface LeaderboardRow {
   Deaths: number | string;
   clan_name?: string;
   submitted_at?: string | Date | null;
-  // Optional averages for lifetime scope
+  discord_id?: string | number | null;
+  discord_server_id?: string | number | null;
   AvgKills?: number;
   AvgShotsFired?: number;
   AvgShotsHit?: number;
@@ -108,22 +111,19 @@ function HeaderButton({
   onSort: (field: SortField) => void;
 }) {
   const isActive = activeSort.sortBy === sortKey;
-  const arrow = isActive ? (activeSort.sortDir === 'asc' ? '▲' : '▼') : '↕';
+  const iconClass = `${lb.sortIcon} ${isActive && activeSort.sortDir === 'asc' ? lb.sortIconAsc : lb.sortIconDesc}`;
   return (
     <button
-      className="table-sort-button"
+      className={lb.sortBtn}
       onClick={() => onSort(sortKey)}
       aria-label={`Sort by ${label}`}
+      aria-pressed={isActive}
     >
-      <span>{label}</span>
-      <span className="table-sort-arrow" aria-hidden>
-        {arrow}
-      </span>
+      {label} <i className={iconClass} />
     </button>
   );
 }
 
-// Moved outside to avoid remounting on each parent render (prevents input blur)
 function LeaderboardTableSection({
   title,
   rows,
@@ -151,6 +151,40 @@ function LeaderboardTableSection({
   sectionId?: string;
   tabsNode?: React.ReactNode;
 }) {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [hover, setHover] = useState<{
+    x: number;
+    y: number;
+    row: LeaderboardRow;
+    profile?: {
+      name?: string | null;
+      callsign?: string | null;
+      rankTitle?: string | null;
+      motto?: string | null;
+      avatarUrl?: string | null;
+    } | null;
+  } | null>(null);
+
+  useEffect(() => {
+    let abort = new AbortController();
+    const row = hover?.row;
+    if (row) {
+      const qs = row.discord_id
+        ? `discordId=${encodeURIComponent(String(row.discord_id))}`
+        : `name=${encodeURIComponent(row.player_name)}`;
+      fetch(`/api/users/lookup?${qs}`, {
+        signal: abort.signal,
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json) => {
+          if (!json) return;
+          setHover((prev) => (prev ? { ...prev, profile: json } : prev));
+        })
+        .catch(() => {});
+    }
+    return () => abort.abort();
+  }, [hover?.row?.player_name, hover?.row?.discord_id]);
+
   const hasAverages =
     showAverages &&
     rows.length > 0 &&
@@ -161,215 +195,214 @@ function LeaderboardTableSection({
 
   const normalizedQuery = searchTerm.trim().toLowerCase();
   const filteredRows = normalizedQuery
-    ? rows.filter((r) =>
-        (r.player_name || '').toLowerCase().includes(normalizedQuery)
-      )
+    ? rows.filter((r) => (r.player_name || '').toLowerCase().includes(normalizedQuery))
     : rows;
 
   const totalColumns =
-    2 /* rank, player */ +
-    1 /* accuracy */ +
-    (showTotals ? 4 : 0) /* totals: kills, shots fired, shots hit, deaths */ +
-    (hasAverages
-      ? 4
-      : 0); /* averages: avg kills, avg shots fired, avg shots hit, avg deaths */
+    2 +
+    1 +
+    (showTotals ? 4 : 0) +
+    (hasAverages ? 4 : 0);
 
   return (
-    <section id={sectionId} className="content-section">
-      <h2 className="content-section-title with-border-bottom leaderboard-title">
-        {title}
-      </h2>
+    <section id={sectionId} className={base.section}>
+      <h2 style={{ marginBottom: 8 }}>{title}</h2>
       {tabsNode}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 12,
-          marginBottom: 12,
-        }}
-      >
-        <input
-          aria-label={`Search ${title} by player name`}
-          placeholder="Search by player name..."
-          value={searchTerm}
-          onChange={(e) => onSearch(e.target.value)}
-          className="input"
-          style={{ maxWidth: 320 }}
-        />
-      </div>
-      {error && <p className="text-paragraph">Error: {error}</p>}
-      {loading ? (
-        <p className="text-paragraph">Loading leaderboard…</p>
-      ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th className="th text-center col-rank" style={{ width: 56 }}>
-                  #
-                </th>
-                <th className="th col-player">
-                  <HeaderButton
-                    label="Player"
-                    sortKey="player_name"
-                    activeSort={activeSort}
-                    onSort={onSort}
-                  />
-                </th>
-                {showTotals && (
-                  <th className="th text-right col-kills">
-                    <HeaderButton
-                      label="Kills"
-                      sortKey="Kills"
-                      activeSort={activeSort}
-                      onSort={onSort}
-                    />
-                  </th>
-                )}
-                {hasAverages && (
-                  <th className="th text-right col-avg-kills">
-                    <HeaderButton
-                      label="Avg Kills"
-                      sortKey="Avg Kills"
-                      activeSort={activeSort}
-                      onSort={onSort}
-                    />
-                  </th>
-                )}
-                <th className="th text-right col-accuracy">
-                  <HeaderButton
-                    label="Accuracy"
-                    sortKey="Accuracy"
-                    activeSort={activeSort}
-                    onSort={onSort}
-                  />
-                </th>
-                {showTotals && (
-                  <th className="th text-right col-shots-fired">
-                    <HeaderButton
-                      label="Shots Fired"
-                      sortKey="Shots Fired"
-                      activeSort={activeSort}
-                      onSort={onSort}
-                    />
-                  </th>
-                )}
-                {hasAverages && (
-                  <th className="th text-right col-avg-shots-fired">
-                    <HeaderButton
-                      label="Avg Shots Fired"
-                      sortKey="Avg Shots Fired"
-                      activeSort={activeSort}
-                      onSort={onSort}
-                    />
-                  </th>
-                )}
-                {showTotals && (
-                  <th className="th text-right col-shots-hit">
-                    <HeaderButton
-                      label="Shots Hit"
-                      sortKey="Shots Hit"
-                      activeSort={activeSort}
-                      onSort={onSort}
-                    />
-                  </th>
-                )}
-                {hasAverages && (
-                  <th className="th text-right col-avg-shots-hit">
-                    <HeaderButton
-                      label="Avg Shots Hit"
-                      sortKey="Avg Shots Hit"
-                      activeSort={activeSort}
-                      onSort={onSort}
-                    />
-                  </th>
-                )}
-                {showTotals && (
-                  <th className="th text-right col-deaths">
-                    <HeaderButton
-                      label="Deaths"
-                      sortKey="Deaths"
-                      activeSort={activeSort}
-                      onSort={onSort}
-                    />
-                  </th>
-                )}
-                {hasAverages && (
-                  <th className="th text-right col-avg-deaths">
-                    <HeaderButton
-                      label="Avg Deaths"
-                      sortKey="Avg Deaths"
-                      activeSort={activeSort}
-                      onSort={onSort}
-                    />
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRows.map((row) => (
-                <tr key={row.id}>
-                  <td className="td text-center col-rank">{row.rank}</td>
-                  <td className="td col-player">{row.player_name}</td>
-                  {showTotals && (
-                    <td className="td text-right col-kills">{row.Kills}</td>
-                  )}
-                  {hasAverages && (
-                    <td className="td text-right col-avg-kills">
-                      {typeof row.AvgKills === 'number'
-                        ? row.AvgKills.toFixed(1)
-                        : ''}
-                    </td>
-                  )}
-                  <td className="td text-right col-accuracy">{row.Accuracy}</td>
-                  {showTotals && (
-                    <td className="td text-right col-shots-fired">
-                      {row.ShotsFired}
-                    </td>
-                  )}
-                  {hasAverages && (
-                    <td className="td text-right col-avg-shots-fired">
-                      {typeof row.AvgShotsFired === 'number'
-                        ? row.AvgShotsFired.toFixed(1)
-                        : ''}
-                    </td>
-                  )}
-                  {showTotals && (
-                    <td className="td text-right col-shots-hit">
-                      {row.ShotsHit}
-                    </td>
-                  )}
-                  {hasAverages && (
-                    <td className="td text-right col-avg-shots-hit">
-                      {typeof row.AvgShotsHit === 'number'
-                        ? row.AvgShotsHit.toFixed(1)
-                        : ''}
-                    </td>
-                  )}
-                  {showTotals && (
-                    <td className="td text-right col-deaths">{row.Deaths}</td>
-                  )}
-                  {hasAverages && (
-                    <td className="td text-right col-avg-deaths">
-                      {typeof row.AvgDeaths === 'number'
-                        ? row.AvgDeaths.toFixed(1)
-                        : ''}
-                    </td>
-                  )}
-                </tr>
-              ))}
-              {!filteredRows.length && (
-                <tr>
-                  <td className="td" colSpan={totalColumns}>
-                    No matching players.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      <div className={lb.card}>
+        <div className={lb.toolbar}>
+          <input
+            aria-label={`Search ${title} by player name`}
+            placeholder="Search by player name..."
+            value={searchTerm}
+            onChange={(e) => onSearch(e.target.value)}
+            className={lb.search}
+            style={{ maxWidth: 320 }}
+          />
         </div>
-      )}
+        {error && <p style={{ padding: 12, color: 'var(--color-error)' }}>Error: {error}</p>}
+        {loading ? (
+          <p style={{ padding: 12 }}>Loading leaderboard…</p>
+        ) : (
+          <div className={`${lb.tableWrap} ${lb.hoverCardContainer}`} ref={wrapRef}>
+            <table className={lb.table}>
+              <thead className={lb.thead}>
+                <tr>
+                  <th className={`${lb.th} ${lb.rankCol}`} style={{ width: 64, textAlign: 'right' }}>#</th>
+                  <th className={`${lb.th} ${lb.nameCol}`}>
+                    <HeaderButton label="Player" sortKey="player_name" activeSort={activeSort} onSort={onSort} />
+                  </th>
+                  {showTotals && (
+                    <th className={`${lb.th} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Kills" sortKey="Kills" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
+                  {hasAverages && (
+                    <th className={`${lb.th} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Avg Kills" sortKey="Avg Kills" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
+                  <th className={`${lb.th} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                    <HeaderButton label="Accuracy" sortKey="Accuracy" activeSort={activeSort} onSort={onSort} />
+                  </th>
+                  {showTotals && (
+                    <th className={`${lb.th} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Shots Fired" sortKey="Shots Fired" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
+                  {hasAverages && (
+                    <th className={`${lb.th} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Avg Shots Fired" sortKey="Avg Shots Fired" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
+                  {showTotals && (
+                    <th className={`${lb.th} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Shots Hit" sortKey="Shots Hit" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
+                  {hasAverages && (
+                    <th className={`${lb.th} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Avg Shots Hit" sortKey="Avg Shots Hit" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
+                  {showTotals && (
+                    <th className={`${lb.th} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Deaths" sortKey="Deaths" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
+                  {hasAverages && (
+                    <th className={`${lb.th} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                      <HeaderButton label="Avg Deaths" sortKey="Avg Deaths" activeSort={activeSort} onSort={onSort} />
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((row) => (
+                  <tr
+                    key={row.id}
+                    onMouseEnter={(e) => {
+                      const container = wrapRef.current;
+                      if (!container) return;
+                      const rect = container.getBoundingClientRect();
+                      const rowRect = (e.currentTarget as HTMLTableRowElement).getBoundingClientRect();
+                      const x = Math.max(8, Math.min(rowRect.left - rect.left + 16, rect.width - 340));
+                      const y = Math.max(8, rowRect.top - rect.top + rowRect.height + 6 - 60);
+                      setHover({ x, y, row, profile: null });
+                    }}
+                    onMouseLeave={() => setHover(null)}
+                    className={lb.tr}
+                  >
+                    <td className={`${lb.td} ${lb.rankCol}`} style={{ textAlign: 'right' }}>{row.rank}</td>
+                    <td className={`${lb.td} ${lb.nameCol}`}>
+                      <span className={lb.playerCell}>
+                        <span className={lb.avatar} aria-hidden>?</span>
+                        {row.player_name}
+                      </span>
+                    </td>
+                    {showTotals && (
+                      <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>{row.Kills}</td>
+                    )}
+                    {hasAverages && (
+                      <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                        {typeof row.AvgKills === 'number' ? row.AvgKills.toFixed(1) : ''}
+                      </td>
+                    )}
+                    <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>{row.Accuracy}</td>
+                    {showTotals && (
+                      <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>{row.ShotsFired}</td>
+                    )}
+                    {hasAverages && (
+                      <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                        {typeof row.AvgShotsFired === 'number' ? row.AvgShotsFired.toFixed(1) : ''}
+                      </td>
+                    )}
+                    {showTotals && (
+                      <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>{row.ShotsHit}</td>
+                    )}
+                    {hasAverages && (
+                      <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                        {typeof row.AvgShotsHit === 'number' ? row.AvgShotsHit.toFixed(1) : ''}
+                      </td>
+                    )}
+                    {showTotals && (
+                      <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>{row.Deaths}</td>
+                    )}
+                    {hasAverages && (
+                      <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right' }}>
+                        {typeof row.AvgDeaths === 'number' ? row.AvgDeaths.toFixed(1) : ''}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+                {!filteredRows.length && (
+                  <tr>
+                    <td className={lb.td} colSpan={totalColumns}>No matching players.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {hover && (
+              <div
+                className={lb.hoverCard}
+                style={{ ['--x' as any]: `${hover.x}px`, ['--y' as any]: `${hover.y}px` }}
+              >
+                <div className={lb.hoverHeader}>
+                  {hover.profile?.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={hover.profile.avatarUrl} alt="Avatar" className={lb.hoverAvatar} />
+                  ) : (
+                    <div className={lb.hoverAvatar}>?</div>
+                  )}
+                  <div>
+                    <div className={lb.hoverName}>{hover.profile?.name || hover.row.player_name}</div>
+                    <div className={lb.hoverSub}>
+                      {hover.profile?.callsign || 'Unknown'}
+                      {hover.profile?.rankTitle ? ` • ${hover.profile.rankTitle}` : ''}
+                      {hover.row.clan_name ? ` • ${hover.row.clan_name}` : ''}
+                    </div>
+                  </div>
+                </div>
+                <div className={lb.hoverGrid}>
+                  <div className={lb.hoverStat}>
+                    <div className={lb.hoverStatLabel}>Kills</div>
+                    <div className={lb.hoverStatValue}>{hover.row.Kills}</div>
+                  </div>
+                  <div className={lb.hoverStat}>
+                    <div className={lb.hoverStatLabel}>Deaths</div>
+                    <div className={lb.hoverStatValue}>{hover.row.Deaths}</div>
+                  </div>
+                  <div className={lb.hoverStat}>
+                    <div className={lb.hoverStatLabel}>Accuracy</div>
+                    <div className={lb.hoverStatValue}>{hover.row.Accuracy}</div>
+                  </div>
+                  <div className={lb.hoverStat}>
+                    <div className={lb.hoverStatLabel}>K/D</div>
+                    <div className={lb.hoverStatValue}>
+                      {(() => {
+                        const k = Number(hover.row.Kills);
+                        const d = Number(hover.row.Deaths);
+                        if (!isFinite(k) || !isFinite(d) || d === 0) return '—';
+                        return (k / d).toFixed(2);
+                      })()}
+                    </div>
+                  </div>
+                </div>
+                {hover.row.submitted_at ? (
+                  <div className={lb.hoverSub} style={{ marginTop: 6 }}>
+                    Last submitted: {new Date(hover.row.submitted_at).toLocaleString()}
+                  </div>
+                ) : null}
+                {hover.profile?.motto ? (
+                  <div style={{ marginTop: 8 }} className={lb.hoverSub}>
+                    “{hover.profile.motto}”
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -407,24 +440,12 @@ export default function HelldiversLeaderboard({
     [initialData, sortBy, sortDir]
   );
 
-  const monthError = initialData.month?.error
-    ? `Request failed: ${initialData.month.error}`
-    : null;
-  const weekError = initialData.week?.error
-    ? `Request failed: ${initialData.week.error}`
-    : null;
-  const dayError = initialData.day?.error
-    ? `Request failed: ${initialData.day.error}`
-    : null;
-  const yearlyError = initialData.lifetime?.error
-    ? `Request failed: ${initialData.lifetime.error}`
-    : null;
-  const soloError = initialData.solo?.error
-    ? `Request failed: ${initialData.solo.error}`
-    : null;
-  const squadError = initialData.squad?.error
-    ? `Request failed: ${initialData.squad.error}`
-    : null;
+  const monthError = initialData.month?.error ? `Request failed: ${initialData.month.error}` : null;
+  const weekError = initialData.week?.error ? `Request failed: ${initialData.week.error}` : null;
+  const dayError = initialData.day?.error ? `Request failed: ${initialData.day.error}` : null;
+  const yearlyError = initialData.lifetime?.error ? `Request failed: ${initialData.lifetime.error}` : null;
+  const soloError = initialData.solo?.error ? `Request failed: ${initialData.solo.error}` : null;
+  const squadError = initialData.squad?.error ? `Request failed: ${initialData.squad.error}` : null;
 
   const isLoading = false;
 
@@ -440,17 +461,13 @@ export default function HelldiversLeaderboard({
       setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortBy(field);
-      setSortDir(
-        field === 'player_name' || field === 'clan_name' ? 'asc' : 'desc'
-      );
+      setSortDir(field === 'player_name' || field === 'clan_name' ? 'asc' : 'desc');
     }
   };
 
   const activeSort = { sortBy, sortDir };
 
-  const [activeTab, setActiveTab] = useState<
-    'daily' | 'weekly' | 'monthly' | 'yearly' | 'solo' | 'squad'
-  >('daily');
+  const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly' | 'yearly' | 'solo' | 'squad'>('daily');
 
   useEffect(() => {
     const setTabFromHash = () => {
@@ -486,49 +503,55 @@ export default function HelldiversLeaderboard({
   const squadTitle = 'Squad Leaderboard';
 
   return (
-    <div>
+    <div className={lb.card}>
       {(() => {
         const tabs = (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <div className={lb.tabs} role="tablist" aria-label="Scope">
             <button
-              className="btn btn-secondary"
+              className={`${lb.tab} ${activeTab === 'daily' ? lb.tabActive : ''}`}
               onClick={() => setActiveTab('daily')}
               aria-pressed={activeTab === 'daily'}
+              role="tab"
             >
-              Daily
+              Day
             </button>
             <button
-              className="btn btn-secondary"
+              className={`${lb.tab} ${activeTab === 'weekly' ? lb.tabActive : ''}`}
               onClick={() => setActiveTab('weekly')}
               aria-pressed={activeTab === 'weekly'}
+              role="tab"
             >
-              Weekly
+              Week
             </button>
             <button
-              className="btn btn-secondary"
+              className={`${lb.tab} ${activeTab === 'monthly' ? lb.tabActive : ''}`}
               onClick={() => setActiveTab('monthly')}
               aria-pressed={activeTab === 'monthly'}
+              role="tab"
             >
-              Monthly
+              Month
             </button>
             <button
-              className="btn btn-secondary"
+              className={`${lb.tab} ${activeTab === 'yearly' ? lb.tabActive : ''}`}
               onClick={() => setActiveTab('yearly')}
               aria-pressed={activeTab === 'yearly'}
+              role="tab"
             >
-              Yearly
+              Lifetime
             </button>
             <button
-              className="btn btn-secondary"
+              className={`${lb.tab} ${activeTab === 'solo' ? lb.tabActive : ''}`}
               onClick={() => setActiveTab('solo')}
               aria-pressed={activeTab === 'solo'}
+              role="tab"
             >
               Solo
             </button>
             <button
-              className="btn btn-secondary"
+              className={`${lb.tab} ${activeTab === 'squad' ? lb.tabActive : ''}`}
               onClick={() => setActiveTab('squad')}
               aria-pressed={activeTab === 'squad'}
+              role="tab"
             >
               Squad
             </button>

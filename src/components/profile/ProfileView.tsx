@@ -342,6 +342,7 @@ export default function ProfileView({
               }
               challengeLabels={CHALLENGE_LEVEL_LABELS}
               campaignLabels={CAMPAIGN_MISSION_LABELS}
+              profileName={userData?.name ?? undefined}
             />
 
             {/* Activity */}
