@@ -18,7 +18,7 @@
   max-width: 1200px; /* Consistent max-width */
   margin: 0 auto;
   padding: 2rem 1rem 4rem; /* Adjusted top padding */
-  color: #e5e7eb; /* text-gray-200 */
+  color: var(--color-text-primary);
   background-color: transparent; /* Let global video show through */
   min-height: 100vh;
   box-sizing: border-box;
@@ -129,8 +129,8 @@
 .merchProductCardLink {
   display: flex;
   flex-direction: column;
-  background-color: #1f2937; /* bg-gray-800 */
-  border: 1px solid #374151; /* border-gray-700 */
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem; /* rounded-lg */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
   overflow: hidden;
@@ -151,9 +151,9 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1; /* Keep square for products */
-  background-color: #000000; /* Black background like embed */
+  background-color: var(--color-background);
   overflow: hidden;
-  border-bottom: 1px solid #4b5563; /* border-gray-600 */
+  border-bottom: 1px solid var(--color-border);
 }
 
 .merchProductImage {
@@ -170,10 +170,10 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: #9ca3af; /* text-gray-400 */
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
   text-align: center;
-  background-color: #374151; /* Use placeholder bg */
+  background-color: var(--color-surface-alt);
 }
 
 /* --- Details Area (Mirrors Info Section) --- */
@@ -190,7 +190,7 @@
   /* Mirrors channelNameLink style */
   font-size: 1.25rem;
   font-weight: 600;
-  color: #ffffff; /* text-white */
+  color: var(--color-text-primary);
   transition: color 0.2s ease;
   display: block; /* Or -webkit-box for line clamp */
   overflow: hidden;
@@ -209,7 +209,7 @@
   /* Mirrors descriptionText style */
   font-size: 0.875rem;
   line-height: 1.6;
-  color: #d1d5db; /* text-gray-300 */
+  color: var(--color-text-secondary);
   margin-top: 0.5rem; /* Consistent spacing */
   margin-bottom: 1rem; /* Add space before price */
   flex-grow: 1; /* Push price down */
@@ -230,7 +230,7 @@
 .merchProductPrice {
   font-size: 1rem;
   font-weight: 700;
-  color: #facc15; /* text-yellow-400 */
+  color: var(--color-primary);
   margin-top: auto; /* Push to bottom */
   padding-top: 0.5rem;
   text-align: right; /* Align price to the right */
@@ -238,8 +238,8 @@
 
 /* Card layer behind the title (mirrors Challenges .section) */
 .titleCard {
-  background-color: #1f2937; /* bg-gray-800 */
-  border: 1px solid #374151; /* border-gray-700 */
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem; /* rounded-lg */
   padding: 1.25rem;
   margin-bottom: 1.5rem;
