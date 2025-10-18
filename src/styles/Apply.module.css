@@ -10,12 +10,13 @@
   padding: 1.25rem 1.25rem 1rem;
   box-shadow: 0 10px 24px rgba(0,0,0,.10);
   margin-bottom: 1rem;
+  text-align: center;
 }
-.heroInner { display: grid; grid-template-columns: 1fr; gap: 1rem; align-items: center; }
+.heroInner { display: grid; grid-template-columns: 1fr; gap: 1rem; align-items: center; justify-items: center; }
 @media (min-width: 980px){ .heroInner { grid-template-columns: 1.15fr .85fr; gap: 1.25rem; } }
 .heroTitle { font-size: clamp(1.6rem, 3vw, 2rem); font-weight: 800; color: var(--color-text-primary); margin: .25rem 0; }
 .heroSubtitle { color: var(--color-text-secondary); line-height: 1.7; max-width: 62ch; }
-.steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .5rem; margin-top: .75rem; }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .5rem; margin-top: .75rem; justify-items: center; }
 .step {
   background: var(--color-surface-alt);
   border: 1px solid var(--color-border);
@@ -23,9 +24,10 @@
   padding: .6rem .75rem;
   color: var(--color-text-secondary);
   font-weight: 600;
+  text-align: center;
 }
 .step strong { color: var(--color-primary); }
-.heroCtaRow { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.heroCtaRow { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; justify-content: center; }
 .heroCta {
   padding: .6rem 1rem;
   background: var(--color-primary);

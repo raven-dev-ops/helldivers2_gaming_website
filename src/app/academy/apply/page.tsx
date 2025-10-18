@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import base from '@/styles/Base.module.css';
@@ -119,7 +119,7 @@ export default function ApplyPage() {
       question:
         'You see repeated accidental team-kills from a new recruit. Best approach?',
       options: [
-        'Kick on the spot to “set an example”',
+        'Kick on the spot to â€œset an exampleâ€',
         'Quietly coach: suggest safer stratagem timing and spacing; log a note',
         'Publicly call them out in general chat',
         'Issue a permanent ban',
@@ -132,7 +132,7 @@ export default function ApplyPage() {
       options: [
         'Hard-mute both, end of story',
         'Move to calm channel, de-escalate, separate if needed, reference rules; document',
-        'Let them “get it out of their system”',
+        'Let them â€œget it out of their systemâ€',
         'Record and post the clip to shame them',
       ],
       answer: 1,
@@ -141,16 +141,16 @@ export default function ApplyPage() {
       question:
         'A member is clearly intoxicated and derailing comms. Policy-aligned first action?',
       options: [
-        'Laugh it off—no harm done',
+        'Laugh it offâ€”no harm done',
         'Ask them to take a break from voice; offer to reschedule play; document',
         'Immediate 7-day ban',
-        'Ignore—only admins can act',
+        'Ignoreâ€”only admins can act',
       ],
       answer: 1,
     },
     {
       question:
-        'Someone accuses a mod of favoritism after a dispute. What’s your move?',
+        'Someone accuses a mod of favoritism after a dispute. Whatâ€™s your move?',
       options: [
         'Defend the mod publicly',
         'Escalate to admins for review; avoid adjudicating your own team; preserve logs',
@@ -161,11 +161,11 @@ export default function ApplyPage() {
     },
     {
       question:
-        'A player spams stratagems on teammates mid-mission, then apologizes. What’s proportionate?',
+        'A player spams stratagems on teammates mid-mission, then apologizes. Whatâ€™s proportionate?',
       options: [
         'Instant server ban',
         'Calm warning + expectations; note incident; repeat = timeout & escalate',
-        'No action—apology is enough',
+        'No actionâ€”apology is enough',
         'Kick from Discord immediately',
       ],
       answer: 1,
@@ -174,7 +174,7 @@ export default function ApplyPage() {
       question:
         'Two moderators break a rule during an event (e.g., mocking a recruit). Correct path?',
       options: [
-        'Ignore—staff are exempt during events',
+        'Ignoreâ€”staff are exempt during events',
         'Politely stop behavior, capture context, escalate to admins for review',
         'Publicly call them out in #general',
         'DM them to delete VOD and move on',
@@ -207,7 +207,7 @@ export default function ApplyPage() {
       question:
         'A user posts slurs in voice. Immediate policy-aligned response?',
       options: [
-        'Issue a warning for “colorful language”',
+        'Issue a warning for â€œcolorful languageâ€',
         'Immediate mute/remove from voice; preserve clip/logs; escalate to admins',
         'Do nothing unless they repeat',
         'Ask others to talk over them',
@@ -227,7 +227,7 @@ export default function ApplyPage() {
     },
     {
       question:
-        'Player refuses to follow “Clear Comms” during high-intensity fights.',
+        'Player refuses to follow â€œClear Commsâ€ during high-intensity fights.',
       options: [
         'Public shaming',
         'One clear reminder; if continued, temporary voice timeout; document',
@@ -238,9 +238,9 @@ export default function ApplyPage() {
     },
     {
       question:
-        'You personally witnessed an incident, but you’re emotionally involved. Best practice?',
+        'You personally witnessed an incident, but youâ€™re emotionally involved. Best practice?',
       options: [
-        'Decide anyway—you saw it',
+        'Decide anywayâ€”you saw it',
         'Recuse from decision; pass to other officers/admins; provide facts only',
         'Ignore conflict',
         'Delete evidence to avoid bias',
@@ -249,7 +249,7 @@ export default function ApplyPage() {
     },
     {
       question:
-        'Evidence collection: what’s most useful when escalating to admins?',
+        'Evidence collection: whatâ€™s most useful when escalating to admins?',
       options: [
         'Vibes and hearsay',
         'Timestamps, clips/logs, brief neutral summary of context and prior actions',
@@ -262,7 +262,7 @@ export default function ApplyPage() {
       question:
         'A recruit repeatedly ignores loadout rules for a training run.',
       options: [
-        'Immediate ban for “insubordination”',
+        'Immediate ban for â€œinsubordinationâ€',
         'Explain training goals, give single corrective step; log; escalate if pattern',
         'Public call-out in #announcements',
         'Let squad punish them',
@@ -282,7 +282,7 @@ export default function ApplyPage() {
     },
     {
       question:
-        'A user reports “too drunk to talk to” member in voice. Best response?',
+        'A user reports â€œtoo drunk to talk toâ€ member in voice. Best response?',
       options: [
         'Kick immediately',
         'Move them out of voice/kind pause; suggest break; document; repeat = timeout & escalate',
@@ -297,7 +297,7 @@ export default function ApplyPage() {
       options: [
         'Never, under any circumstance',
         'Only if there is an immediate safety/harassment risk; then document and inform admins ASAP',
-        'Whenever it’s faster',
+        'Whenever itâ€™s faster',
         'If two mods agree privately',
       ],
       answer: 1,
@@ -315,7 +315,7 @@ export default function ApplyPage() {
     },
     {
       question:
-        'During a raid, a veteran mocks a new player’s mistakes. What’s proportionate?',
+        'During a raid, a veteran mocks a new playerâ€™s mistakes. Whatâ€™s proportionate?',
       options: [
         'Let veterans vent',
         'Remind code of conduct, ask for constructive guidance; document; repeat = timeout',
@@ -328,7 +328,7 @@ export default function ApplyPage() {
       question:
         'A mod deletes messages about their own mistake. What now?',
       options: [
-        'Nothing—they fixed the feed',
+        'Nothingâ€”they fixed the feed',
         'Capture logs, escalate to admins for review; recuse that mod from related decisions',
         'Ask them to re-post an apology and move on',
         'Ban the mod immediately',
@@ -342,13 +342,13 @@ export default function ApplyPage() {
         'Allow them to re-litigate in #general',
         'Direct them to appeals process; keep #general clear; document contact',
         'Block them',
-        'Tell them “too bad”',
+        'Tell them â€œtoo badâ€',
       ],
       answer: 1,
     },
     {
       question:
-        'How should you phrase warnings to align with “Fair & Consistent”?',
+        'How should you phrase warnings to align with â€œFair & Consistentâ€?',
       options: [
         'Personal remarks about character',
         'Short, neutral, behavior-based; reference rule; state next step',
@@ -381,6 +381,21 @@ export default function ApplyPage() {
     },
   ];
 
+  // Shuffle answer positions so correct option is mixed up
+  const shuffledModQuestions = useMemo(() => {
+    function shuffleOne(q: Question): Question {
+      const order = q.options.map((_, i) => i);
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      const newOptions = order.map((i) => q.options[i]);
+      const newAnswer = order.indexOf(q.answer);
+      return { question: q.question, options: newOptions, answer: newAnswer };
+    }
+    return modQuestions.map(shuffleOne);
+  }, []);
+
   return (
     <div className={base.wrapper}>
       <div className={base.dividerLayer} />
@@ -392,7 +407,7 @@ export default function ApplyPage() {
               <h1 className={styles.heroTitle}>Apply to the Mod Team</h1>
               <p className={styles.heroSubtitle}>
                 Keep comms clear, morale high, and missions efficient. Moderators set the tone for
-                Managed Democracy—on and off the field. Short answers now; we’ll dig deeper in a brief interview.
+                Managed Democracyâ€”on and off the field. Short answers now; weâ€™ll dig deeper in a brief interview.
               </p>
               <div className={styles.steps}>
                 <div className={styles.step}><strong>1.</strong> Apply</div>
@@ -415,7 +430,7 @@ export default function ApplyPage() {
             <h2 className={base.sectionTitle}>Join Our Mod Team Today!</h2>
             <p className={base.paragraph}>
               Help us keep comms clear, morale high, and missions efficient. Moderators set the tone
-              for Managed Democracy—on and off the field.
+              for Managed Democracyâ€”on and off the field.
             </p>
 
             <div className={styles.badgeRow}>
@@ -443,7 +458,7 @@ export default function ApplyPage() {
                 Remember: enforcement requires <strong>3 other officers present</strong> and <strong>prior discussion in mod chat</strong>
                 (except immediate safety risks). Admins have final say.
               </p>
-              <Quiz title="Moderator Readiness Quiz" questions={modQuestions} />
+              <Quiz title="Moderator Readiness Quiz" questions={shuffledModQuestions} />
             </div>
           </aside>
         </div>
@@ -516,7 +531,7 @@ export default function ApplyPage() {
 
             <div className={styles.ctaRow}>
               <button type="submit" disabled={submitting} className={styles.applyButton}>
-                {submitting ? 'Submitting…' : 'Submit Application'}
+                {submitting ? 'Submitting...' : 'Submit Application'}
               </button>
               <button
                 type="button"
@@ -532,15 +547,14 @@ export default function ApplyPage() {
             </p>
           </form>
 
-          {/* Right: video + rotating prompts (centered) */}
+          {/* Right: image + rotating prompts (centered) */}
           <div className={styles.videoColumn}>
             <div className={styles.videoWrapper}>
-              <iframe
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                title="Helldivers 2 Moderator Info"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
+              <img
+                src="/images/placeholder.png"
+                alt="Mod team media placeholder"
                 className={styles.videoFrame}
+                loading="lazy"
               />
             </div>
 
@@ -560,3 +574,7 @@ export default function ApplyPage() {
     </div>
   );
 }
+
+
+
+
