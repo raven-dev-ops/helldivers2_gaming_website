@@ -30,6 +30,13 @@
 .modulesRail::-webkit-scrollbar { height: 10px; }
 .modulesRail::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 10px; }
 
+/* Grid layout for tiling modules */
+.modulesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
 .moduleCard {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);

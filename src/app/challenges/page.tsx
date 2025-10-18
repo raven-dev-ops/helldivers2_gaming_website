@@ -11,6 +11,7 @@ import code from '@/styles/CodeBlocks.module.css';
 
 // Components
 import SubmitChallengeModal from '@/components/challenges/SubmitChallengeModal';
+import acad from '@/styles/AcademyPage.module.css';
 import YoutubeCarouselPlaceholder from '@/components/challenges/YoutubeCarouselChallenges';
 
 // Data (JH0–JH7)
@@ -95,7 +96,8 @@ export default function ChallengesPage() {
 
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
             <button
-              className="btn btn-secondary"
+              type="button"
+              className={acad.ctaButton}
               onClick={() => {
                 setMessage(null);
                 setIsSubmitModalOpen(true);

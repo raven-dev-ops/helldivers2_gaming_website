@@ -8,6 +8,7 @@ import base from '@/styles/Base.module.css';
 import exp from '@/styles/Expanders.module.css';
 import code from '@/styles/CodeBlocks.module.css';
 import SubmitCampaignModal from '@/components/campaigns/SubmitCampaignModal';
+import acad from '@/styles/AcademyPage.module.css';
 import YoutubeCarouselPlaceholder from '@/components/campaigns/YoutubeCarouselCampaigns';
 
 // ⬇️ Use shared data/types from lib
@@ -102,7 +103,8 @@ export default function CampaignsPage() {
 
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
             <button
-              className="btn btn-secondary"
+              type="button"
+              className={acad.ctaButton}
               onClick={() => {
                 setMessage(null);
                 setIsSubmitModalOpen(true);

@@ -156,7 +156,7 @@ function SectionTable(props: { title: string; rows: LeaderboardRow[]; activeSort
 
   return (
     <section className={base.section}>
-      <h2 style={{ marginBottom: 8 }}>{title}</h2>
+      <h2 style={{ marginBottom: 8, color: 'var(--color-primary)' }}>{title}</h2>
       {tabsNode}
       <div className={lb.card}>
         <div className={lb.toolbar}>

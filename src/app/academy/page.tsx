@@ -42,19 +42,8 @@ export default function AcademyPage() {
       <div className={base.dividerLayer} />
 
       <main className={base.pageContainer} role="main" aria-label="Academy">
-        <header className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>Academy</h1>
-          <p className={styles.pageSubtitle}>
-            Structured training modules to level up your skills.
-          </p>
-        </header>
-
-        <section className={base.section} aria-labelledby="academy-title">
-          <h2 id="academy-title" className={base.sectionTitle}>
-            Training Modules
-          </h2>
-
-          <ul className={styles.modulesRail} aria-label="Available modules">
+        <section className={base.section} aria-label="Training Modules">
+          <ul className={styles.modulesGrid} aria-label="Available modules">
             {MODULES.map((module) => {
               const { details: _omit, ...m } = module;
               return (
