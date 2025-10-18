@@ -174,6 +174,11 @@ export async function GET(req: NextRequest) {
               sesName = usr?.sesName || null;
             }
           }
+          // Fallback to a Discord default avatar when available
+          if (!avatarUrl && did) {
+            const idx = Math.abs(Number.parseInt(did, 10) || 0) % 5;
+            avatarUrl = `https://cdn.discordapp.com/embed/avatars/${idx}.png`;
+          }
           if (avatarUrl) (r as any)._avatarUrl = avatarUrl;
           if (sesName && !r.sesTitle) r.sesTitle = sesName;
         }

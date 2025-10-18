@@ -4,6 +4,7 @@ import Image from 'next/image';
 import NoPrefetchLink from '@/components/common/NoPrefetchLink';
 import React from 'react';
 import styles from '@/styles/MerchPage.module.css';
+import base from '@/styles/Base.module.css';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
@@ -171,13 +172,8 @@ export default async function HelldiversMerchPage() {
     <div className={styles.wrapper}>
       <div className={styles.dividerLayer} />
       <main className={styles.merchMainContainer}>
-        <div className={styles.titleCard}>
-          <h1 className={styles.merchPageTitle}>GPT Clan Collectibles</h1>
-          <p className={styles.merchDisclaimer}>
-            100% of all profit generated goes to our yearly charity drive vote
-            on by our members.
-          </p>
-        </div>
+        {/* Keep an accessible heading for SEO without visible marketing copy */}
+        <h1 className={base.visuallyHidden}>GPT Fleet Store</h1>
 
         {errorOccurred ? (
           <div className={styles.merchErrorText}>{errorMessage}</div>
