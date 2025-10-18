@@ -568,17 +568,31 @@ export async function fetchHelldiversLeaderboard(options?: {
       },
     });
   } else {
-    // Lifetime scope: aggregate per member
-    // Use the latest name/clan as representative
-    if (options?.year && Number.isFinite(options.year)) {
-      const start = new Date(Date.UTC(options.year, 0, 1));
-      const end = new Date(Date.UTC(options.year + 1, 0, 1));
-      pipeline.push({
-        $match: { submittedAtDate: { $gte: start, $lt: end } },
+    // Lifetime scope: union of configured month collections + current month 'User_Stats'
+    // Default months: April, May, June 2025 per requirements
+    const defaultMonths = ['User_Stats_2025_04', 'User_Stats_2025_05', 'User_Stats_2025_06'];
+    const envList = (process.env.LIFETIME_MONTH_COLLECTIONS || '').split(',').map((s) => s.trim()).filter(Boolean);
+    const monthCollections = envList.length ? envList : defaultMonths;
+
+    // Build union pipeline: start from current month 'User_Stats'
+    // Note: We'll execute the aggregate against 'User_Stats' at the end of this function
+    //       and add $unionWith stages for the archival monthly collections.
+    const lifetimePipeline: any[] = [];
+    // Append our normalization stage for the base collection already defined as 'pipeline[0]'
+    lifetimePipeline.push(...pipeline);
+
+    // Add unionWith for each archival month collection
+    for (const coll of monthCollections) {
+      lifetimePipeline.push({
+        $unionWith: {
+          coll,
+          pipeline: pipeline, // reuse the same $addFields normalization
+        },
       });
     }
-    pipeline.push({ $sort: { submittedAtDate: 1 } });
-    pipeline.push({
+
+    lifetimePipeline.push({ $sort: { submittedAtDate: 1 } });
+    lifetimePipeline.push({
       $group: {
         _id: '$memberKey',
         player_name: { $last: '$player_name' },
@@ -598,7 +612,7 @@ export async function fetchHelldiversLeaderboard(options?: {
         submissionsCount: { $sum: 1 },
       },
     });
-    pipeline.push({
+    lifetimePipeline.push({
       $addFields: {
         avgKills: {
           $cond: [
@@ -696,10 +710,9 @@ export async function fetchHelldiversLeaderboard(options?: {
         break;
     }
 
-    pipeline.push({ $sort: sortStageLifetime });
-    pipeline.push({ $limit: limit });
-
-    pipeline.push({
+    lifetimePipeline.push({ $sort: sortStageLifetime });
+    lifetimePipeline.push({ $limit: limit });
+    lifetimePipeline.push({
       $project: {
         _id: 1,
         player_name: 1,
@@ -722,11 +735,58 @@ export async function fetchHelldiversLeaderboard(options?: {
         avgDeaths: 1,
       },
     });
+
+    // Execute against 'User_Stats' (base), with unions for archival months
+    const cursor = db.collection('User_Stats').aggregate(lifetimePipeline, { allowDiskUse: true });
+    const results = await cursor.toArray();
+
+    const formatted: HelldiversLeaderboardRow[] = results.map(
+      (doc: any, index: number) => ({
+        rank: index + 1,
+        id: String(doc._id),
+        player_name: doc.player_name || '',
+        Kills: doc.Kills ?? 0,
+        Accuracy:
+          typeof doc.accuracyPct === 'number'
+            ? `${doc.accuracyPct.toFixed(1)}%`
+            : typeof doc.Accuracy === 'string'
+              ? doc.Accuracy
+              : typeof doc.numericAccuracy === 'number'
+                ? `${doc.numericAccuracy.toFixed(1)}%`
+                : '',
+        ShotsFired: doc['Shots Fired'] ?? 0,
+        ShotsHit: doc['Shots Hit'] ?? 0,
+        Deaths: doc.Deaths ?? 0,
+        MeleeKills: doc.MeleeKills ?? doc['Melee Kills'] ?? 0,
+        StimsUsed: doc.StimsUsed ?? doc['Stims Used'] ?? 0,
+        StratsUsed: doc.StratsUsed ?? doc['Strats Used'] ?? 0,
+        discord_id: doc.discord_id || null,
+        discord_server_id: doc.discord_server_id || null,
+        clan_name: doc.clan_name || '',
+        submitted_by: doc.submitted_by || '',
+        submitted_at: doc.submitted_at || null,
+        sesTitle: doc.sesTitle || null,
+        AvgKills:
+          typeof doc.avgKills === 'number' ? Number(doc.avgKills) : undefined,
+        AvgShotsFired:
+          typeof doc.avgShotsFired === 'number'
+            ? Number(doc.avgShotsFired)
+            : undefined,
+        AvgShotsHit:
+          typeof doc.avgShotsHit === 'number'
+            ? Number(doc.avgShotsHit)
+            : undefined,
+        AvgDeaths:
+          typeof doc.avgDeaths === 'number' ? Number(doc.avgDeaths) : undefined,
+      })
+    );
+
+    return { sortBy, sortDir, limit, results: formatted };
   }
 
   const collectionName =
     scope === 'lifetime'
-      ? 'Lifetime_Stats'
+      ? 'User_Stats'
       : scope === 'solo'
         ? 'Solo_Stats'
         : scope === 'squad'

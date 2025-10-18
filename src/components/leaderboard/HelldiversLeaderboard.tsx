@@ -1,4 +1,4 @@
-// src/components/leaderboard/HelldiversLeaderboard.tsx
+﻿// src/components/leaderboard/HelldiversLeaderboard.tsx
 
 'use client';
 
@@ -52,6 +52,7 @@ interface LeaderboardRow {
   StimsUsed?: number;
   StratsUsed?: number;
   sesTitle?: string | null;
+  _avatarUrl?: string | null;
   AvgKills?: number;
   AvgShotsFired?: number;
   AvgShotsHit?: number;
@@ -177,6 +178,7 @@ function LeaderboardTableSection({
   } | null>(null);
   const hoverTimer = useRef<number | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const avatarCacheRef = useRef<Map<string, string | null>>(new Map());
 
   useEffect(() => {
     let abort = new AbortController();
@@ -197,6 +199,28 @@ function LeaderboardTableSection({
     }
     return () => abort.abort();
   }, [hover?.row?.player_name, hover?.row?.discord_id]);
+
+  const useAvatar = (row: LeaderboardRow) => {
+    const [, force] = useState(0);
+    useEffect(() => {
+      const pre = (row as any)._avatarUrl || (row as any).avatarUrl || null;
+      if (pre !== null) return; // already enriched by API
+      const key = row.discord_id ? `d:${row.discord_id}` : `n:${row.player_name}`;
+      if (avatarCacheRef.current.has(key)) return;
+      const qs = row.discord_id ? `discordId=${encodeURIComponent(String(row.discord_id))}` : `name=${encodeURIComponent(row.player_name)}`;
+      fetch(`/api/users/lookup?${qs}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+          avatarCacheRef.current.set(key, j?.avatarUrl || null);
+          force((x) => x + 1);
+        })
+        .catch(() => avatarCacheRef.current.set(key, null));
+    }, [row.discord_id, row.player_name]);
+    const inline = (row as any)._avatarUrl || (row as any).avatarUrl || null;
+    if (inline) return inline;
+    const key = row.discord_id ? `d:${row.discord_id}` : `n:${row.player_name}`;
+    return avatarCacheRef.current.get(key) ?? null;
+  };
 
   // Unpin on Escape or click outside the table/card
   useEffect(() => {
@@ -254,9 +278,10 @@ function LeaderboardTableSection({
             style={{ maxWidth: 320 }}
           />
         </div>
+        {/* Fleet Average summary now moves to table footer */}
         {error && <p style={{ padding: 12, color: 'var(--color-error)' }}>Error: {error}</p>}
         {loading ? (
-          <p style={{ padding: 12 }}>Loading leaderboard…</p>
+          <p style={{ padding: 12 }}>Loading leaderboardâ€¦</p>
         ) : (
           <div className={`${lb.tableWrap} ${lb.hoverCardContainer}`} ref={wrapRef}>
             <table className={lb.table}>
@@ -362,7 +387,15 @@ function LeaderboardTableSection({
                     <td className={`${lb.td} ${lb.rankCol}`} style={{ textAlign: 'right' }}>{row.rank}</td>
                     <td className={`${lb.td} ${lb.nameCol}`}>
                       <span className={lb.playerCell}>
-                        <span className={lb.avatar} aria-hidden>?</span>
+                        {(() => {
+                          const url = useAvatar(row);
+                          return url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={url} alt="Avatar" className={lb.avatar} />
+                          ) : (
+                            <span className={lb.avatar} aria-hidden>?</span>
+                          );
+                        })()}
                         {row.player_name}
                       </span>
                     </td>
@@ -422,13 +455,97 @@ function LeaderboardTableSection({
                   </tr>
                 )}
               </tbody>
+              <tfoot className={lb.tfoot}>
+                {(() => {
+                  const a = filteredRows.reduce(
+                    (acc, r) => {
+                      acc.k += Number(r.Kills) || 0;
+                      acc.d += Number(r.Deaths) || 0;
+                      acc.sf += Number(r.ShotsFired) || 0;
+                      acc.sh += Number(r.ShotsHit) || 0;
+                      acc.mk += Number(r.MeleeKills || 0);
+                      acc.st += Number(r.StimsUsed || 0);
+                      acc.sr += Number(r.StratsUsed || 0);
+                      return acc;
+                    },
+                    { k: 0, d: 0, sf: 0, sh: 0, mk: 0, st: 0, sr: 0 }
+                  );
+                  const accPct = a.sf > 0 ? `${((a.sh / a.sf) * 100).toFixed(1)}%` : '0.0%';
+                  const kd = a.d > 0 ? (a.k / a.d).toFixed(2) : '—';
+                  return (
+                    <tr>
+                      <td className={`${lb.td} ${lb.rankCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>—</td>
+                      <td className={`${lb.td} ${lb.nameCol}`} style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
+                        Fleet Average
+                      </td>
+                      {showTotals && (
+                        <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>
+                          {a.k}
+                        </td>
+                      )}
+                      {hasAverages && <td className={`${lb.td} ${lb.statCol}`}></td>}
+                      <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{accPct}</td>
+                      {showTotals && (
+                        <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>
+                          {a.sf}
+                        </td>
+                      )}
+                      {/* Avg Shots Fired placeholder if visible */}
+                      {hasAverages && <td className={`${lb.td} ${lb.statCol}`}></td>}
+                      {showTotals && (
+                        <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>
+                          {a.sh}
+                        </td>
+                      )}
+                      {showTotals && (
+                        <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>
+                          {a.mk}
+                        </td>
+                      )}
+                      {showTotals && (
+                        <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>
+                          {a.st}
+                        </td>
+                      )}
+                      {showTotals && (
+                        <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>
+                          {a.sr}
+                        </td>
+                      )}
+                      {hasAverages && <td className={`${lb.td} ${lb.statCol}`}></td>}
+                      {showTotals && (
+                        <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>
+                          {a.d}
+                        </td>
+                      )}
+                      {hasAverages && <td className={`${lb.td} ${lb.statCol}`}></td>}
+                    </tr>
+                  );
+                })()}
+              </tfoot>
             </table>
 
             {hover && (
               <div
                 className={lb.hoverCard}
                 ref={cardRef}
-                style={{ ['--x' as any]: `${hover.x}px`, ['--y' as any]: `${hover.y}px`, pointerEvents: hover.pinned ? 'auto' : 'none' }}
+                onMouseDown={(e) => {
+                  const startX = e.clientX;
+                  const startY = e.clientY;
+                  const orig = { x: hover.x, y: hover.y };
+                  const onMove = (ev: MouseEvent) => {
+                    const dx = ev.clientX - startX;
+                    const dy = ev.clientY - startY;
+                    setHover((prev) => (prev ? { ...prev, x: Math.max(0, orig.x + dx), y: Math.max(0, orig.y + dy) } : prev));
+                  };
+                  const onUp = () => {
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('mouseup', onUp, true);
+                  };
+                  window.addEventListener('mousemove', onMove);
+                  window.addEventListener('mouseup', onUp, true);
+                }}
+                style={{ ['--x' as any]: `${hover.x}px`, ['--y' as any]: `${hover.y}px`, pointerEvents: 'auto' }}
               >
                 {hover.pinned && (
                   <button
@@ -445,7 +562,7 @@ function LeaderboardTableSection({
                       fontSize: 16,
                     }}
                   >
-                    ×
+                    Ã—
                   </button>
                 )}
                 <div className={lb.hoverHeader}>
@@ -456,11 +573,10 @@ function LeaderboardTableSection({
                     <div className={lb.hoverAvatar}>?</div>
                   )}
                   <div>
-                    <div className={lb.hoverName}>{hover.profile?.name || hover.row.player_name}</div>
-                    <div className={lb.hoverSub}>
+                    <div className={lb.hoverName}>{hover.profile?.name || hover.row.player_name}</div>\n                    {(() => { const ses = (hover.profile as any)?.sesName || hover.row.sesTitle || null; return ses ? (<div className={lb.hoverSub} title="S.E.S. (Destroyer) Name">{ses}</div>) : null; })()}\n                    <div className={lb.hoverSub}>
                       {hover.profile?.callsign || 'Unknown'}
-                      {hover.profile?.rankTitle ? ` • ${hover.profile.rankTitle}` : ''}
-                      {hover.row.clan_name ? ` • ${hover.row.clan_name}` : ''}
+                      {hover.profile?.rankTitle ? ` â€¢ ${hover.profile.rankTitle}` : ''}
+                      {hover.row.clan_name ? ` â€¢ ${hover.row.clan_name}` : ''}
                     </div>
                   </div>
                 </div>
@@ -483,7 +599,7 @@ function LeaderboardTableSection({
                       {(() => {
                         const k = Number(hover.row.Kills);
                         const d = Number(hover.row.Deaths);
-                        if (!isFinite(k) || !isFinite(d) || d === 0) return '—';
+                        if (!isFinite(k) || !isFinite(d) || d === 0) return 'â€”';
                         return (k / d).toFixed(2);
                       })()}
                     </div>
@@ -500,19 +616,19 @@ function LeaderboardTableSection({
                   </div>
                   <div className={lb.hoverStat}>
                     <div className={lb.hoverStatLabel}>Melee Kills</div>
-                    <div className={lb.hoverStatValue}>{hover.row.MeleeKills ?? '—'}</div>
+                    <div className={lb.hoverStatValue}>{hover.row.MeleeKills ?? 'â€”'}</div>
                   </div>
                   <div className={lb.hoverStat}>
                     <div className={lb.hoverStatLabel}>Stims Used</div>
-                    <div className={lb.hoverStatValue}>{hover.row.StimsUsed ?? '—'}</div>
+                    <div className={lb.hoverStatValue}>{hover.row.StimsUsed ?? 'â€”'}</div>
                   </div>
                   <div className={lb.hoverStat}>
                     <div className={lb.hoverStatLabel}>Strats Used</div>
-                    <div className={lb.hoverStatValue}>{hover.row.StratsUsed ?? '—'}</div>
+                    <div className={lb.hoverStatValue}>{hover.row.StratsUsed ?? 'â€”'}</div>
                   </div>
-                  <div className={lb.hoverStat} title={`SES: ${hover.row.sesTitle ?? 'Unknown'} — Destroyer designation/status.`}>
+                  <div className={lb.hoverStat} title={`SES: ${hover.row.sesTitle ?? 'Unknown'} â€” Destroyer designation/status.`}>
                     <div className={lb.hoverStatLabel}>SES</div>
-                    <div className={lb.hoverStatValue}>{hover.row.sesTitle ?? '—'}</div>
+                    <div className={lb.hoverStatValue}>{hover.row.sesTitle ?? 'â€”'}</div>
                   </div>
                 </div>
                 {hover.row.submitted_at ? (
@@ -522,7 +638,7 @@ function LeaderboardTableSection({
                 ) : null}
                 {hover.profile?.motto ? (
                   <div style={{ marginTop: 8 }} className={lb.hoverSub}>
-                    “{hover.profile.motto}”
+                    â€œ{hover.profile.motto}â€
                   </div>
                 ) : null}
               </div>
@@ -793,3 +909,5 @@ export default function HelldiversLeaderboard({
     </div>
   );
 }
+
+

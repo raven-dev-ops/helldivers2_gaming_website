@@ -267,6 +267,14 @@
   .pageContainer { padding: 3rem 1rem 4rem; }
 }
 
+.tfoot td {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(0deg, var(--color-surface-alt), var(--color-surface));
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -1px 0 var(--color-border), 0 -6px 12px rgba(0,0,0,.18);
+}
+
 /* --- Hover Player Card --- */
 .hoverCardContainer { position: relative; }
 .hoverCard {

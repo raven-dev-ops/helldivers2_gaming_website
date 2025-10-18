@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     }
 
     const user = await User.findOne(query)
-      .select('name callsign rankTitle motto customAvatarDataUrl image')
+      .select('name callsign rankTitle motto sesName customAvatarDataUrl image')
       .lean();
 
     if (!user) {
@@ -41,6 +41,7 @@ export async function GET(req: Request) {
         callsign: user.callsign ?? null,
         rankTitle: user.rankTitle ?? null,
         motto: user.motto ?? null,
+        sesName: (user as any).sesName ?? null,
         avatarUrl,
       },
       { status: 200 }
@@ -49,4 +50,3 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Lookup failed' }, { status: 500 });
   }
 }
-

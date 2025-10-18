@@ -67,7 +67,6 @@ function NavLinks(props: {
     { href: `/challenges`, label: 'Challenges' },
     { href: `/campaigns`, label: 'Campaigns' },
     { href: `/academy`, label: 'Academy' },
-    { href: `/creators`, label: 'Streamers' },
   ] as const;
 
   const isDesktop = variant === 'desktop';
@@ -200,11 +199,6 @@ function NavLinks(props: {
                   <Link href={toUrl(ACADEMY_APPLY)} className={styles.dropdownItem} role="menuitem" prefetch={false}>
                     Mod Team
                   </Link>
-                  {sessionStatus === 'authenticated' && (
-                    <Link href={toUrl(ACADEMY_MY)} className={styles.dropdownItem} role="menuitem" prefetch={false}>
-                      My Training
-                    </Link>
-                  )}
                 </div>
               </div>
             );
@@ -218,11 +212,6 @@ function NavLinks(props: {
               <Link href={toUrl(ACADEMY_APPLY)} className={styles.link} prefetch={false} {...linkClick}>
                 Mod Team
               </Link>
-              {sessionStatus === 'authenticated' && (
-                <Link href={toUrl(ACADEMY_MY)} className={styles.link} prefetch={false} {...linkClick}>
-                  My Training
-                </Link>
-              )}
             </div>
           );
         }
@@ -236,48 +225,7 @@ function NavLinks(props: {
         );
       })}
 
-      {/* Auth/Profile block */}
-      {sessionStatus === 'authenticated' ? (
-        isDesktop ? (
-          <div className={styles.dropdown}>
-            <Link
-              href={toUrl('/profile')}
-              className={styles.link}
-              aria-haspopup="menu"
-              aria-expanded="false"
-            >
-              {`Profile${meritPoints !== null ? ` (${meritPoints})` : ''}`}
-            </Link>
-            <div className={styles.dropdownMenu} role="menu" aria-label="Profile actions">
-              <Link href={toUrl('/settings')} className={styles.dropdownItem} role="menuitem">
-                Settings
-              </Link>
-              <button onClick={() => signOut()} className={styles.dropdownItem} role="menuitem">
-                Sign out
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <Link href={toUrl('/profile')} className={styles.link} {...linkClick}>
-              {`Profile${meritPoints !== null ? ` (${meritPoints})` : ''}`}
-            </Link>
-            <button
-              onClick={() => {
-                if (closeMobile) closeMobile();
-                signOut();
-              }}
-              className={styles.link}
-            >
-              Sign out
-            </button>
-          </>
-        )
-      ) : (
-        <Link href={toUrl('/auth')} className={styles.link} {...linkClick}>
-          Sign in
-        </Link>
-      )}
+      {/* Auth/Profile items removed per request */}
     </>
   );
 }

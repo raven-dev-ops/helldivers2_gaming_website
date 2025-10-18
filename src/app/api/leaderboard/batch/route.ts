@@ -6,6 +6,8 @@ export const fetchCache = 'default-no-store';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { jsonWithETag } from '@/lib/httpCache';
+import dbConnect from '@/lib/dbConnect';
+import UserModel from '@/models/User';
 import {
   fetchHelldiversLeaderboard,
   VALID_SORT_FIELDS,
@@ -119,16 +121,84 @@ export async function GET(req: NextRequest) {
         )
       );
 
+      // Enrich results with avatar + SES (profile sesName)
+      const enrich = async (payload: { results: any[] }) => {
+        if (!payload?.results?.length) return payload;
+        await dbConnect();
+        const rows = payload.results;
+        const discordIds = Array.from(
+          new Set(
+            rows
+              .map((r: any) => (r.discord_id != null ? String(r.discord_id) : null))
+              .filter(Boolean)
+          )
+        ) as string[];
+        const names = Array.from(
+          new Set(rows.map((r: any) => String(r.player_name || '')).filter(Boolean))
+        );
+
+        const usersByDiscord = new Map<string, any>();
+        if (discordIds.length) {
+          const u = await UserModel.find({ providerAccountId: { $in: discordIds } })
+            .select('providerAccountId customAvatarDataUrl image sesName name')
+            .lean();
+          for (const usr of u) usersByDiscord.set(String(usr.providerAccountId), usr);
+        }
+
+        // Fallback fetch by name (case-insensitive) in chunks to avoid huge $or
+        const usersByName = new Map<string, any>();
+        const chunkSize = 40;
+        for (let i = 0; i < names.length; i += chunkSize) {
+          const slice = names.slice(i, i + chunkSize);
+          const or = slice.map((n) => ({ name: { $regex: `^${n.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}$`, $options: 'i' } }));
+          if (!or.length) continue;
+          const u = await UserModel.find({ $or: or })
+            .select('name customAvatarDataUrl image sesName providerAccountId')
+            .lean();
+          for (const usr of u) usersByName.set(String((usr as any).name).toLowerCase(), usr);
+        }
+
+        for (const r of rows) {
+          let avatarUrl: string | null = null;
+          let sesName: string | null = null;
+          const did = r.discord_id != null ? String(r.discord_id) : null;
+          if (did && usersByDiscord.has(did)) {
+            const usr = usersByDiscord.get(did);
+            avatarUrl = usr?.customAvatarDataUrl || usr?.image || null;
+            sesName = usr?.sesName || null;
+          } else {
+            const key = String(r.player_name || '').toLowerCase();
+            const usr = usersByName.get(key);
+            if (usr) {
+              avatarUrl = usr?.customAvatarDataUrl || usr?.image || null;
+              sesName = usr?.sesName || null;
+            }
+          }
+          if (avatarUrl) (r as any)._avatarUrl = avatarUrl;
+          if (sesName && !r.sesTitle) r.sesTitle = sesName;
+        }
+        return payload;
+      };
+
+      const enrichedPromises: Promise<void>[] = [];
+
       results.forEach((res, i) => {
         const { scope, key } = fetches[i];
         if (res.status === 'fulfilled') {
-          out[scope] = res.value;
-          setCache(key, res.value);
+          enrichedPromises.push(
+            (async () => {
+              const val = await enrich(res.value);
+              out[scope] = val;
+              setCache(key, val);
+            })()
+          );
         } else {
           errors[scope] = res.reason?.message ?? 'Fetch failed';
           logger.error?.('leaderboard scope fetch failed', { scope, error: String(res.reason) });
         }
       });
+
+      if (enrichedPromises.length) await Promise.allSettled(enrichedPromises);
     }
 
     const payload = Object.keys(errors).length ? { ...out, errors } : out;
