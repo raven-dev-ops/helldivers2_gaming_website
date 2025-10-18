@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { postToDiscord } from '@/lib/discordWebhook';
+import { format } from 'date-fns';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
         logger.info('Sending application webhook');
 
         const applicant = session?.user?.name || 'Unknown user';
-        const content = `New application received from ${applicant}`;
+        let content = `Application submitted successfully!`;
 
         const embedFields: Array<{ name: string; value: string; inline: boolean }> = [
           { name: 'Type', value: type, inline: true },
@@ -85,9 +86,19 @@ export async function POST(request: Request) {
         }
 
         if (interviewAvailability) {
+          const interviewUnix = Math.floor(interviewAvailability.getTime() / 1000);
+          const interviewPretty = format(
+            interviewAvailability,
+            "EEEE, MMMM d, yyyy 'at' h:mm a"
+          );
+          const interviewDisplay = `<t:${interviewUnix}:F> (${interviewPretty})`;
+
+          // Add a friendly line to the plain content too
+          content += ` Interview target: ${interviewPretty}.`;
+
           embedFields.push({
-            name: 'Interview Availability',
-            value: interviewAvailability.toISOString(),
+            name: 'Interview Target',
+            value: interviewDisplay,
             inline: false,
           });
         }
@@ -97,7 +108,7 @@ export async function POST(request: Request) {
             content,
             embeds: [
               {
-                title: 'User Application Submitted',
+                title: 'Application Submitted',
                 description: `Applicant: **${applicant}**`,
                 color: 0x00b894,
                 timestamp: new Date().toISOString(),
