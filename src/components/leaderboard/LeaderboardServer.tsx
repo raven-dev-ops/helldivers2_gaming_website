@@ -16,7 +16,7 @@ async function fetchLeaderboard() {
     process.env.NEXT_PUBLIC_SITE_HOST;
   const base = `${proto}://${host}`;
   const res = await fetch(
-    `${base}/api//leaderboard/batch?scopes=day,week,month,lifetime,solo,squad&sortBy=Kills&sortDir=desc&limit=100`,
+    `${base}/api/leaderboard/batch?scopes=day,week,month,lifetime&sortBy=Kills&sortDir=desc&limit=100`,
     { cache: 'no-store' }
   );
   if (!res.ok) {

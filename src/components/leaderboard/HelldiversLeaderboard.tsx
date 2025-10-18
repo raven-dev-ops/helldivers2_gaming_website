@@ -64,8 +64,8 @@ interface LeaderboardPayload {
   week?: { results: LeaderboardRow[]; error?: number };
   month?: { results: LeaderboardRow[]; error?: number };
   lifetime?: { results: LeaderboardRow[]; error?: number };
-  solo?: { results: LeaderboardRow[]; error?: number };
-  squad?: { results: LeaderboardRow[]; error?: number };
+  
+  
 }
 
 const sortFieldMap: Record<SortField, keyof LeaderboardRow> = {
@@ -163,86 +163,12 @@ function LeaderboardTableSection({
   tabsNode?: React.ReactNode;
 }) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
-  const [hover, setHover] = useState<{
-    x: number;
-    y: number;
-    row: LeaderboardRow;
-    profile?: {
-      name?: string | null;
-      callsign?: string | null;
-      rankTitle?: string | null;
-      motto?: string | null;
-      avatarUrl?: string | null;
-    } | null;
-    pinned?: boolean;
-  } | null>(null);
-  const hoverTimer = useRef<number | null>(null);
-  const cardRef = useRef<HTMLDivElement | null>(null);
+  
+  
+  
   const avatarCacheRef = useRef<Map<string, string | null>>(new Map());
 
-  useEffect(() => {
-    let abort = new AbortController();
-    const row = hover?.row;
-    if (row) {
-      const qs = row.discord_id
-        ? `discordId=${encodeURIComponent(String(row.discord_id))}`
-        : `name=${encodeURIComponent(row.player_name)}`;
-      fetch(`/api/users/lookup?${qs}`, {
-        signal: abort.signal,
-      })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((json) => {
-          if (!json) return;
-          setHover((prev) => (prev ? { ...prev, profile: json } : prev));
-        })
-        .catch(() => {});
-    }
-    return () => abort.abort();
-  }, [hover?.row?.player_name, hover?.row?.discord_id]);
-
-  const useAvatar = (row: LeaderboardRow) => {
-    const [, force] = useState(0);
-    useEffect(() => {
-      const pre = (row as any)._avatarUrl || (row as any).avatarUrl || null;
-      if (pre !== null) return; // already enriched by API
-      const key = row.discord_id ? `d:${row.discord_id}` : `n:${row.player_name}`;
-      if (avatarCacheRef.current.has(key)) return;
-      const qs = row.discord_id ? `discordId=${encodeURIComponent(String(row.discord_id))}` : `name=${encodeURIComponent(row.player_name)}`;
-      fetch(`/api/users/lookup?${qs}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((j) => {
-          avatarCacheRef.current.set(key, j?.avatarUrl || null);
-          force((x) => x + 1);
-        })
-        .catch(() => avatarCacheRef.current.set(key, null));
-    }, [row.discord_id, row.player_name]);
-    const inline = (row as any)._avatarUrl || (row as any).avatarUrl || null;
-    if (inline) return inline;
-    const key = row.discord_id ? `d:${row.discord_id}` : `n:${row.player_name}`;
-    return avatarCacheRef.current.get(key) ?? null;
-  };
-
-  // Unpin on Escape or click outside the table/card
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setHover(null);
-    };
-    const onDown = (e: MouseEvent) => {
-      if (!hover?.pinned) return;
-      const card = cardRef.current;
-      const wrap = wrapRef.current;
-      const target = e.target as Node | null;
-      if (card && target && card.contains(target)) return;
-      if (wrap && target && wrap.contains(target)) return;
-      setHover(null);
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('mousedown', onDown, true);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('mousedown', onDown, true);
-    };
-  }, [hover?.pinned]);
+  
 
   const hasAverages =
     showAverages &&
@@ -283,7 +209,7 @@ function LeaderboardTableSection({
         {loading ? (
           <p style={{ padding: 12 }}>Loading leaderboardâ€¦</p>
         ) : (
-          <div className={`${lb.tableWrap} ${lb.hoverCardContainer}`} ref={wrapRef}>
+          <div className={`${lb.tableWrap} ${}`} ref={wrapRef}>
             <table className={lb.table}>
               <thead className={lb.thead}>
                 <tr>
@@ -362,9 +288,8 @@ function LeaderboardTableSection({
                       const rowRect = (e.currentTarget as HTMLTableRowElement).getBoundingClientRect();
                       const x = Math.max(8, Math.min(rowRect.left - rect.left + 16, rect.width - 340));
                       const y = Math.max(8, rowRect.top - rect.top + rowRect.height + 6 - 60);
-                      if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
-                      hoverTimer.current = window.setTimeout(() => {
-                        setHover({ x, y, row, profile: null });
+                      
+                      
                       }, 3000);
                     }}
                     onClick={(e) => {
@@ -374,13 +299,13 @@ function LeaderboardTableSection({
                       const rowRect = (e.currentTarget as HTMLTableRowElement).getBoundingClientRect();
                       const x = Math.max(8, Math.min(rowRect.left - rect.left + 16, rect.width - 340));
                       const y = Math.max(8, rowRect.top - rect.top + rowRect.height + 6 - 60);
-                      if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
-                      setHover({ x, y, row, profile: null, pinned: true });
+                      
+                      
                     }}
                     onMouseLeave={() => {
-                      if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
-                      hoverTimer.current = null;
-                      setHover((prev) => (prev?.pinned ? prev : null));
+                      
+                      
+                      
                     }}
                     className={lb.tr}
                   >
@@ -526,51 +451,7 @@ function LeaderboardTableSection({
             </table>
 
             {hover && (
-              <div
-                className={lb.hoverCard}
-                ref={cardRef}
-                onMouseDown={(e) => {
-                  const startX = e.clientX;
-                  const startY = e.clientY;
-                  const orig = { x: hover.x, y: hover.y };
-                  const onMove = (ev: MouseEvent) => {
-                    const dx = ev.clientX - startX;
-                    const dy = ev.clientY - startY;
-                    setHover((prev) => (prev ? { ...prev, x: Math.max(0, orig.x + dx), y: Math.max(0, orig.y + dy) } : prev));
-                  };
-                  const onUp = () => {
-                    window.removeEventListener('mousemove', onMove);
-                    window.removeEventListener('mouseup', onUp, true);
-                  };
-                  window.addEventListener('mousemove', onMove);
-                  window.addEventListener('mouseup', onUp, true);
-                }}
-                style={{ ['--x' as any]: `${hover.x}px`, ['--y' as any]: `${hover.y}px`, pointerEvents: 'auto' }}
-              >
-                {hover.pinned && (
-                  <button
-                    aria-label="Close"
-                    onClick={() => setHover(null)}
-                    style={{
-                      position: 'absolute',
-                      top: 6,
-                      right: 8,
-                      background: 'transparent',
-                      color: 'var(--color-text-secondary)',
-                      border: 0,
-                      cursor: 'pointer',
-                      fontSize: 16,
-                    }}
-                  >
-                    Ã—
-                  </button>
-                )}
-                <div className={lb.hoverHeader}>
-                  {hover.profile?.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={hover.profile.avatarUrl} alt="Avatar" className={lb.hoverAvatar} />
-                  ) : (
-                    <div className={lb.hoverAvatar}>?</div>
+              
                   )}
                   <div>
                     <div className={lb.hoverName}>{hover.profile?.name || hover.row.player_name}</div>\n                    {(() => { const ses = (hover.profile as any)?.sesName || hover.row.sesTitle || null; return ses ? (<div className={lb.hoverSub} title="S.E.S. (Destroyer) Name">{ses}</div>) : null; })()}\n                    <div className={lb.hoverSub}>
@@ -710,7 +591,7 @@ export default function HelldiversLeaderboard({
 
   const activeSort = { sortBy, sortDir };
 
-  const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly' | 'yearly' | 'solo' | 'squad'>('daily');
+  const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly' | 'yearly' >('daily');
 
   useEffect(() => {
     const setTabFromHash = () => {
@@ -909,5 +790,14 @@ export default function HelldiversLeaderboard({
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
 
 

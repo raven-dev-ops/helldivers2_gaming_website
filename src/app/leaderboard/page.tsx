@@ -9,15 +9,8 @@ export default function LeaderboardPage() {
       <div className={base.dividerLayer} />
 
       <main className={base.pageContainer} role="main" aria-label="Leaderboard">
-        {/* Page header */}
-        <header className={styles.header} style={{ justifyContent: 'center', textAlign: 'center' }}>
-          <div>
-            <h1 className={styles.pageTitle}>Leaderboard</h1>
-            <p className={styles.pageSubtitle}>Updated every 60s</p>
-          </div>
-        </header>
-
-        {/* The component below renders tabs, search, and table with unified styling */}
+        {/* SEO-friendly but hidden heading */}
+        <h1 className={base.visuallyHidden}>Helldivers 2 Leaderboard</h1>
         <section className={styles.container} aria-label="Leaderboard">
           <LeaderboardServer />
         </section>
@@ -25,4 +18,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
