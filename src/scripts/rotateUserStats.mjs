@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// Rotates the live User_Stats collection into a month-stamped archive, and creates a fresh User_Stats
-// Example: on Nov 1 00:05, rename User_Stats -> User_Stats_2025_10 and create new empty User_Stats
+// Month-end rotation:
+// 1) Rename User_Stats to a month-stamped temp
+// 2) Merge all docs from the temp into Lifetime_Stats
+// 3) Drop the temp and create a fresh empty User_Stats
 // Usage: node src/scripts/rotateUserStats.mjs
 
 import { MongoClient } from 'mongodb';
@@ -20,7 +22,7 @@ const now = new Date();
 const prev = new Date(now.getFullYear(), now.getMonth(), 0); // day 0 of current month -> last day previous month
 const year = prev.getFullYear();
 const month = pad(prev.getMonth() + 1);
-const archiveName = `User_Stats_${year}_${month}`;
+const tempName = `User_Stats_prev_${year}_${month}`;
 
 async function main() {
   const client = new MongoClient(uri, { maxPoolSize: 3 });
@@ -33,13 +35,24 @@ async function main() {
     return;
   }
 
-  const destExists = await db.listCollections({ name: archiveName }).toArray();
+  const destExists = await db.listCollections({ name: tempName }).toArray();
   if (destExists.length) {
-    console.log(`Archive ${archiveName} already exists. Skipping rename.`);
+    console.log(`Temp ${tempName} already exists. Skipping rename.`);
   } else {
-    console.log(`Renaming User_Stats -> ${archiveName}`);
-    await db.collection('User_Stats').rename(archiveName);
+    console.log(`Renaming User_Stats -> ${tempName}`);
+    await db.collection('User_Stats').rename(tempName);
   }
+
+  // Merge docs into Lifetime_Stats
+  console.log(`Merging ${tempName} into Lifetime_Stats ...`);
+  await db.collection(tempName).aggregate([
+    { $match: {} },
+    { $merge: { into: 'Lifetime_Stats', on: '_id', whenMatched: 'keepExisting', whenNotMatched: 'insert' } },
+  ]).toArray();
+
+  // Drop the temp
+  console.log(`Dropping ${tempName} ...`);
+  await db.collection(tempName).drop().catch(() => {});
 
   // Ensure fresh live collection exists
   const newExists = await db.listCollections({ name: 'User_Stats' }).toArray();
@@ -62,4 +75,3 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-

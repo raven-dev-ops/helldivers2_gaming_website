@@ -568,28 +568,16 @@ export async function fetchHelldiversLeaderboard(options?: {
       },
     });
   } else {
-    // Lifetime scope: union of configured month collections + current month 'User_Stats'
-    // Default months: April, May, June 2025 per requirements
-    const defaultMonths = ['User_Stats_2025_04', 'User_Stats_2025_05', 'User_Stats_2025_06'];
-    const envList = (process.env.LIFETIME_MONTH_COLLECTIONS || '').split(',').map((s) => s.trim()).filter(Boolean);
-    const monthCollections = envList.length ? envList : defaultMonths;
-
-    // Build union pipeline: start from current month 'User_Stats'
-    // Note: We'll execute the aggregate against 'User_Stats' at the end of this function
-    //       and add $unionWith stages for the archival monthly collections.
+    // Lifetime scope: union of Lifetime_Stats (all historical) + current month User_Stats
+    // This keeps historical data compact in Lifetime_Stats while including in‑progress stats from User_Stats.
     const lifetimePipeline: any[] = [];
-    // Append our normalization stage for the base collection already defined as 'pipeline[0]'
-    lifetimePipeline.push(...pipeline);
-
-    // Add unionWith for each archival month collection
-    for (const coll of monthCollections) {
-      lifetimePipeline.push({
-        $unionWith: {
-          coll,
-          pipeline: pipeline, // reuse the same $addFields normalization
-        },
-      });
-    }
+    lifetimePipeline.push(...pipeline); // base normalization for User_Stats
+    lifetimePipeline.push({
+      $unionWith: {
+        coll: 'Lifetime_Stats',
+        pipeline: pipeline, // reuse normalization for unioned docs
+      },
+    });
 
     lifetimePipeline.push({ $sort: { submittedAtDate: 1 } });
     lifetimePipeline.push({
@@ -736,7 +724,7 @@ export async function fetchHelldiversLeaderboard(options?: {
       },
     });
 
-    // Execute against 'User_Stats' (base), with unions for archival months
+    // Execute against 'User_Stats' (base), unioning with Lifetime_Stats
     const cursor = db.collection('User_Stats').aggregate(lifetimePipeline, { allowDiskUse: true });
     const results = await cursor.toArray();
 
