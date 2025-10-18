@@ -1,0 +1,227 @@
+// src/components/leaderboard/HelldiversLeaderboard.tsx
+
+'use client';
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import base from '@/styles/Base.module.css';
+import lb from '@/styles/LeaderboardPage.module.css';
+
+type SortField =
+  | 'Kills'
+  | 'Accuracy'
+  | 'Shots Fired'
+  | 'Shots Hit'
+  | 'Deaths'
+  | 'Melee Kills'
+  | 'Stims Used'
+  | 'Strats Used'
+  | 'player_name'
+  | 'clan_name'
+  | 'submitted_at'
+  | 'Avg Kills'
+  | 'Avg Shots Fired'
+  | 'Avg Shots Hit'
+  | 'Avg Deaths';
+
+type SortDir = 'asc' | 'desc';
+
+function getWeekNumber(d: Date) {
+  const date = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+  );
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+interface LeaderboardRow {
+  rank: number;
+  id: string;
+  player_name: string;
+  Kills: number | string;
+  Accuracy: string;
+  ShotsFired: number;
+  ShotsHit: number;
+  Deaths: number | string;
+  clan_name?: string;
+  submitted_at?: string | Date | null;
+  discord_id?: string | number | null;
+  discord_server_id?: string | number | null;
+  MeleeKills?: number;
+  StimsUsed?: number;
+  StratsUsed?: number;
+  sesTitle?: string | null;
+  _avatarUrl?: string | null;
+  AvgKills?: number;
+  AvgShotsFired?: number;
+  AvgShotsHit?: number;
+  AvgDeaths?: number;
+}
+
+interface LeaderboardPayload {
+  day?: { results: LeaderboardRow[]; error?: number };
+  week?: { results: LeaderboardRow[]; error?: number };
+  month?: { results: LeaderboardRow[]; error?: number };
+  lifetime?: { results: LeaderboardRow[]; error?: number };
+  
+  
+}
+
+const sortFieldMap: Record<SortField, keyof LeaderboardRow> = {
+  Kills: 'Kills',
+  Accuracy: 'Accuracy',
+  'Shots Fired': 'ShotsFired',
+  'Shots Hit': 'ShotsHit',
+  Deaths: 'Deaths',
+  'Melee Kills': 'MeleeKills',
+  'Stims Used': 'StimsUsed',
+  'Strats Used': 'StratsUsed',
+  player_name: 'player_name',
+  clan_name: 'clan_name',
+  submitted_at: 'submitted_at',
+  'Avg Kills': 'AvgKills',
+  'Avg Shots Fired': 'AvgShotsFired',
+  'Avg Shots Hit': 'AvgShotsHit',
+  'Avg Deaths': 'AvgDeaths',
+};
+
+function sortRows(
+  rows: LeaderboardRow[],
+  sortBy: SortField,
+  sortDir: SortDir
+): LeaderboardRow[] {
+  const key = sortFieldMap[sortBy];
+  const sorted = [...rows].sort((a, b) => {
+    const aVal: any = (a as any)[key];
+    const bVal: any = (b as any)[key];
+    const toNum = (v: any) => {
+      if (typeof v === 'number') return v;
+      const n = parseFloat(String(v).replace('%', ''));
+      return isNaN(n) ? null : n;
+    };
+    const aNum = toNum(aVal);
+    const bNum = toNum(bVal);
+    if (aNum !== null && bNum !== null) {
+      return aNum - bNum;
+    }
+    return String(aVal ?? '').localeCompare(String(bVal ?? ''));
+  });
+  return sortDir === 'asc' ? sorted : sorted.reverse();
+}
+
+function HeaderButton({
+  label,
+  sortKey,
+  activeSort,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortField;
+  activeSort: { sortBy: SortField; sortDir: SortDir };
+  onSort: (field: SortField) => void;
+}) {
+  const isActive = activeSort.sortBy === sortKey;
+  const iconClass = `${lb.sortIcon} ${isActive && activeSort.sortDir === 'asc' ? lb.sortIconAsc : lb.sortIconDesc}`;
+  return (
+    
+          </div>
+        );
+        return (
+          <>
+            {activeTab === 'daily' && (
+              <LeaderboardTableSection
+                title={dayTitle}
+                rows={dayData}
+                loading={isLoading}
+                error={dayError}
+                activeSort={activeSort}
+                onSort={toggleSort}
+                showAverages={false}
+                showTotals={true}
+                searchTerm={daySearch}
+                onSearch={setDaySearch}
+                sectionId="daily"
+                tabsNode={tabs}
+              />
+            )}
+
+            {activeTab === 'weekly' && (
+              <LeaderboardTableSection
+                title={weekTitle}
+                rows={weekData}
+                loading={isLoading}
+                error={weekError}
+                activeSort={activeSort}
+                onSort={toggleSort}
+                showAverages={false}
+                showTotals={true}
+                searchTerm={weekSearch}
+                onSearch={setWeekSearch}
+                sectionId="weekly"
+                tabsNode={tabs}
+              />
+            )}
+
+            {activeTab === 'monthly' && (
+              <LeaderboardTableSection
+                title={monthTitle}
+                rows={monthData}
+                loading={isLoading}
+                error={monthError}
+                activeSort={activeSort}
+                onSort={toggleSort}
+                showAverages={false}
+                showTotals={true}
+                searchTerm={monthSearch}
+                onSearch={setMonthSearch}
+                sectionId="monthly"
+                tabsNode={tabs}
+              />
+            )}
+
+            {activeTab === 'yearly' && (
+              <LeaderboardTableSection
+                title={yearlyTitle}
+                rows={yearlyData}
+                loading={isLoading}
+                error={yearlyError}
+                activeSort={activeSort}
+                onSort={toggleSort}
+                showAverages={false}
+                showTotals={true}
+                searchTerm={yearlyTotalsSearch}
+                onSearch={setYearlyTotalsSearch}
+                sectionId="yearly"
+                tabsNode={tabs}
+              />
+            )}
+
+            
+
+            
+          </>
+        );
+      })()}
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
