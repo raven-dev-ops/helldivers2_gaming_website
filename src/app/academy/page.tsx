@@ -75,13 +75,7 @@ export default function AcademyPage() {
               }
             : undefined
         }
-        rightCta={
-          selectedModule?.id === 'command' ? (
-            <a href="/mod-team" className={styles.ctaButton} aria-label="Apply to Mod Team">
-              Apply to Mod Team
-            </a>
-          ) : null
-        }
+        rightCta={null}
       >
         {selectedModule && (
           <>

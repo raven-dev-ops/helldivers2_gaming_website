@@ -7,8 +7,7 @@ import { FaChevronDown } from 'react-icons/fa';
 import base from '@/styles/Base.module.css';
 import exp from '@/styles/Expanders.module.css';
 import code from '@/styles/CodeBlocks.module.css';
-import SubmitCampaignModal from '@/components/campaigns/SubmitCampaignModal';
-import acad from '@/styles/AcademyPage.module.css';
+// Removed submission modal and button per request
 import YoutubeCarouselPlaceholder from '@/components/campaigns/YoutubeCarouselCampaigns';
 
 // ⬇️ Use shared data/types from lib
@@ -20,8 +19,7 @@ import {
 
 export default function CampaignsPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  // Submission modal removed
 
   const toggleExpansion = (id: string) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -101,32 +99,10 @@ export default function CampaignsPage() {
             })}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-            <button
-              type="button"
-              className={acad.ctaButton}
-              onClick={() => {
-                setMessage(null);
-                setIsSubmitModalOpen(true);
-              }}
-            >
-              Submit Campaign
-            </button>
-          </div>
+          {/* Submit Campaign button removed */}
         </section>
 
-        {message && (
-          <p className={base.paragraph} style={{ textAlign: 'center' }}>
-            {message}
-          </p>
-        )}
-
-        <SubmitCampaignModal
-          isOpen={isSubmitModalOpen}
-          onClose={() => setIsSubmitModalOpen(false)}
-          onSubmitted={(msg: string) => setMessage(msg)}
-          missions={prestigeMissions}
-        />
+        {/* Submission modal removed */}
       </div>
     </div>
   );

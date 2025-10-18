@@ -10,8 +10,7 @@ import exp from '@/styles/Expanders.module.css';
 import code from '@/styles/CodeBlocks.module.css';
 
 // Components
-import SubmitChallengeModal from '@/components/challenges/SubmitChallengeModal';
-import acad from '@/styles/AcademyPage.module.css';
+// Removed submission modal and button per request
 import YoutubeCarouselPlaceholder from '@/components/challenges/YoutubeCarouselChallenges';
 
 // Data (JH0–JH7)
@@ -19,8 +18,7 @@ import { challengeLevels, type ChallengeLevelData } from '@/lib/challenges';
 
 export default function ChallengesPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  // Submission modal removed
 
   const toggleExpansion = (id: string) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -94,32 +92,10 @@ export default function ChallengesPage() {
             })}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-            <button
-              type="button"
-              className={acad.ctaButton}
-              onClick={() => {
-                setMessage(null);
-                setIsSubmitModalOpen(true);
-              }}
-            >
-              Submit Challenge
-            </button>
-          </div>
+          {/* Submit Challenge button removed */}
         </section>
 
-        {message && (
-          <p className={base.paragraph} style={{ textAlign: 'center' }}>
-            {message}
-          </p>
-        )}
-
-        <SubmitChallengeModal
-          isOpen={isSubmitModalOpen}
-          onClose={() => setIsSubmitModalOpen(false)}
-          onSubmitted={(msg: string) => setMessage(msg)}
-          levels={challengeLevels}
-        />
+        {/* Submission modal removed */}
       </div>
     </div>
   );

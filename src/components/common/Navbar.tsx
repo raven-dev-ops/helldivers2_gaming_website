@@ -51,7 +51,6 @@ function NavLinks(props: {
   } = props;
 
   const ACADEMY_BASE = `/academy`;
-  const ACADEMY_APPLY = `${ACADEMY_BASE}/apply`;
   const ACADEMY_MY = `${ACADEMY_BASE}/training`;
 
   const linkClick =
@@ -195,11 +194,7 @@ function NavLinks(props: {
                 <Link href={toUrl(ACADEMY_BASE)} className={linkCls(active)} prefetch={false}>
                   Academy
                 </Link>
-                <div className={styles.dropdownMenu} role="menu" aria-label="Academy">
-                  <Link href={toUrl(ACADEMY_APPLY)} className={styles.dropdownItem} role="menuitem" prefetch={false}>
-                    Mod Team
-                  </Link>
-                </div>
+                {/* No child links */}
               </div>
             );
           }
@@ -208,9 +203,6 @@ function NavLinks(props: {
             <div key={href}>
               <Link href={toUrl(ACADEMY_BASE)} className={styles.link} prefetch={false} {...linkClick}>
                 Academy
-              </Link>
-              <Link href={toUrl(ACADEMY_APPLY)} className={styles.link} prefetch={false} {...linkClick}>
-                Mod Team
               </Link>
             </div>
           );
