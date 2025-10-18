@@ -78,7 +78,12 @@ export default function AcademyPage() {
         subtitle={selectedModule?.subtitle}
         hero={
           selectedModule
-            ? { src: selectedModule.img, alt: selectedModule.imgAlt, width: 1200, height: 675 }
+            ? {
+                src: selectedModule.img || '/images/placeholder.svg',
+                alt: selectedModule.imgAlt || 'Academy module image',
+                width: 1200,
+                height: 675,
+              }
             : undefined
         }
         rightCta={
@@ -181,18 +186,20 @@ function ModuleCard({
   onOpen: (id: string, trigger: HTMLButtonElement | null) => void;
   onKeyOpen: (e: KeyboardEvent<HTMLButtonElement>, id: string) => void;
 }) {
+  const [imgError, setImgError] = useState(false);
   return (
     <li className={styles.moduleCard} aria-label={`${data.title} module`}>
       <div className={styles.moduleCardImgWrap}>
         <Image
           className={styles.moduleCardImg}
-          src={data.img}
-          alt={data.imgAlt}
+          src={imgError ? '/images/placeholder.svg' : (data.img || '/images/placeholder.svg')}
+          alt={data.imgAlt || `${data.title} image`}
           width={1200}
           height={675}
           sizes="(max-width: 768px) 90vw, (max-width: 1200px) 50vw, 33vw"
           loading="lazy"
           priority={false}
+          onError={() => setImgError(true)}
         />
       </div>
 
