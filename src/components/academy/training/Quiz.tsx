@@ -13,9 +13,13 @@ export interface Question {
 interface QuizProps {
   title: string;
   questions: Question[];
+  /** Hide the default trigger button; open via exposeOpen instead */
+  hideTrigger?: boolean;
+  /** Parent can capture an open() function to programmatically start the quiz */
+  exposeOpen?: (open: () => void) => void;
 }
 
-export default function Quiz({ title, questions }: QuizProps) {
+export default function Quiz({ title, questions, hideTrigger, exposeOpen }: QuizProps) {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number[]>([]);
@@ -29,13 +33,18 @@ export default function Quiz({ title, questions }: QuizProps) {
 
   useEffect(() => setMounted(true), []);
 
-  const openModal = () => {
+  const openModal = useCallback(() => {
     setSelected(Array(questions.length).fill(-1));
     setScore(0);
     setShowAnswer(false);
     setCurrent(0);
     setOpen(true);
-  };
+  }, [questions]);
+
+  // Expose open() to parent when requested
+  useEffect(() => {
+    if (exposeOpen) exposeOpen(openModal);
+  }, [exposeOpen, openModal]);
 
   const closeModal = useCallback(() => setOpen(false), []);
 
@@ -117,9 +126,11 @@ export default function Quiz({ title, questions }: QuizProps) {
 
   return (
     <>
-      <button onClick={openModal} className={styles.quizButton}>
-        Take Quiz
-      </button>
+      {!hideTrigger && (
+        <button onClick={openModal} className={styles.quizButton}>
+          Take Quiz
+        </button>
+      )}
 
       {open && mounted &&
         createPortal(

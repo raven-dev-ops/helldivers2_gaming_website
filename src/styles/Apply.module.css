@@ -41,9 +41,9 @@
 
 /* Two-column layout: form left, video+prompts right */
 .applyTwoCol {
-    display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; margin-top: 1.25rem;
+    display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; margin-top: 1.25rem; justify-items: center;
   }
-  @media (min-width: 980px){ .applyTwoCol { grid-template-columns: 1.1fr 1fr; } }
+  @media (min-width: 980px){ .applyTwoCol { grid-template-columns: 1fr; } }
   
   /* Form */
   .applicationFormWide { display: grid; gap: 1rem; width: 100%; max-width: 680px; }

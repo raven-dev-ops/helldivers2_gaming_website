@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import base from '@/styles/Base.module.css';
 import styles from '@/styles/Apply.module.css';
 import Quiz, { type Question } from '@/components/academy/training/Quiz';
@@ -20,6 +20,7 @@ export default function ApplyPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const quizOpenRef = useRef<(() => void) | null>(null);
 
   const [promptIndex, setPromptIndex] = useState(0);
   useEffect(() => {
@@ -407,7 +408,7 @@ export default function ApplyPage() {
               <h1 className={styles.heroTitle}>Apply to the Mod Team</h1>
               <p className={styles.heroSubtitle}>
                 Keep comms clear, morale high, and missions efficient. Moderators set the tone for
-                Managed Democracyâ€”on and off the field. Short answers now; weâ€™ll dig deeper in a brief interview.
+                Managed Democracy—on and off the field. Short answers now; we'll dig deeper in a brief interview.
               </p>
               <div className={styles.steps}>
                 <div className={styles.step}><strong>1.</strong> Apply</div>
@@ -416,12 +417,24 @@ export default function ApplyPage() {
               </div>
               <div className={styles.heroCtaRow}>
                 <a href="#application" className={styles.heroCta}>Start Application</a>
-                <a href="#readiness" className={`${styles.heroCta} ${styles.ghost}`}>Check Readiness</a>
+                <button type="button" className={`${styles.heroCta} ${styles.ghost}`} onClick={(e) => { e.preventDefault(); quizOpenRef.current?.(); }}>
+                  Check Readiness
+                </button>
               </div>
             </div>
-            {/* Optional hero media can go here */}
+            <div className={styles.videoWrapper} aria-hidden>
+              <img src="/images/placeholder.png" alt="Mod team media placeholder" className={styles.videoFrame} loading="lazy" />
+            </div>
           </div>
         </div>
+
+        {/* Hidden Quiz instance; opened via the hero CTA */}
+        <Quiz
+          title="Moderator Readiness Quiz"
+          questions={shuffledModQuestions}
+          hideTrigger
+          exposeOpen={(open) => { quizOpenRef.current = open; }}
+        />
         <section className={base.section}>
           {/* --- INTRO (LEFT) + QUIZ (RIGHT) --- */}
           <div className={styles.introAndQuizRow}>
@@ -447,20 +460,7 @@ export default function ApplyPage() {
             </ul>
           </div>
 
-          {/* RIGHT: Readiness Quiz */}
-          <aside id="readiness" className={styles.quizSide}>
-            <div className={`${base.subsectionCard} ${styles.quizSideCard}`}>
-              <div className={styles.modQuizHeader}>
-                <h3 className={base.subHeading}>Moderator Readiness — 25-Question Scenario Quiz</h3>
-              </div>
-              <p className={`${base.paragraph} ${styles.modQuizDesc}`}>
-                Scenarios reflect real Helldivers 2 comms: team-kills, intoxication, staff conduct, and escalation.
-                Remember: enforcement requires <strong>3 other officers present</strong> and <strong>prior discussion in mod chat</strong>
-                (except immediate safety risks). Admins have final say.
-              </p>
-              <Quiz title="Moderator Readiness Quiz" questions={shuffledModQuestions} />
-            </div>
-          </aside>
+          {/* Quiz sidebar removed; hero CTA now starts the quiz directly */}
         </div>
 
         {/* --- TWO-COLUMN: FORM LEFT, VIDEO + PROMPTS RIGHT --- */}
@@ -548,32 +548,13 @@ export default function ApplyPage() {
           </form>
 
           {/* Right: image + rotating prompts (centered) */}
-          <div className={styles.videoColumn}>
-            <div className={styles.videoWrapper}>
-              <img
-                src="/images/placeholder.png"
-                alt="Mod team media placeholder"
-                className={styles.videoFrame}
-                loading="lazy"
-              />
-            </div>
-
-            <div className={styles.promptPanel}>
-              <div className={styles.promptHeading}>Think on this</div>
-              <p className={styles.promptText} aria-live="polite">
-                {PROMPTS[promptIndex]}
-              </p>
-              <p className={styles.promptHint}>
-                Interviews are scheduled in your local time. Bring examples!
-              </p>
-            </div>
-          </div>
         </div>
       </section>
       </div>
     </div>
   );
 }
+
 
 
 
