@@ -130,7 +130,29 @@ function SectionTable(props: { title: string; rows: LeaderboardRow[]; activeSort
     },
     { k: 0, d: 0, sf: 0, sh: 0, mk: 0, st: 0, sr: 0 }
   );
-  const accPct = agg.sf > 0 ? `${((agg.sh / agg.sf) * 100).toFixed(1)}%` : '0.0%';
+  // Compute average accuracy by averaging each row's percentage where available
+  let accSum = 0;
+  let accCount = 0;
+  for (const r of filteredRows) {
+    const v = typeof r.Accuracy === 'string' ? parseFloat(r.Accuracy.replace('%', '')) : NaN;
+    if (!Number.isNaN(v)) {
+      accSum += v;
+      accCount += 1;
+    }
+  }
+  const count = filteredRows.length;
+  const avg = count > 0
+    ? {
+        k: agg.k / count,
+        d: agg.d / count,
+        sf: agg.sf / count,
+        sh: agg.sh / count,
+        mk: agg.mk / count,
+        st: agg.st / count,
+        sr: agg.sr / count,
+      }
+    : { k: 0, d: 0, sf: 0, sh: 0, mk: 0, st: 0, sr: 0 };
+  const accPct = accCount > 0 ? `${(accSum / accCount).toFixed(1)}%` : '0.0%';
 
   return (
     <section className={base.section}>
@@ -201,17 +223,17 @@ function SectionTable(props: { title: string; rows: LeaderboardRow[]; activeSort
               <tr>
                 <td className={`${lb.td} ${lb.rankCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>—</td>
                 <td className={`${lb.td} ${lb.nameCol}`} style={{ color: 'var(--color-primary)', fontWeight: 700 }}>Fleet Average</td>
-                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{agg.k}</td>)}
+                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{Math.round(avg.k)}</td>)}
                 {hasAverages && (<td className={`${lb.td} ${lb.statCol}`} />)}
                 <td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{accPct}</td>
-                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{agg.sf}</td>)}
+                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{Math.round(avg.sf)}</td>)}
                 {hasAverages && (<td className={`${lb.td} ${lb.statCol}`} />)}
-                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{agg.sh}</td>)}
-                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{agg.mk}</td>)}
-                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{agg.st}</td>)}
-                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{agg.sr}</td>)}
+                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{Math.round(avg.sh)}</td>)}
+                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{Math.round(avg.mk)}</td>)}
+                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{Math.round(avg.st)}</td>)}
+                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{Math.round(avg.sr)}</td>)}
                 {hasAverages && (<td className={`${lb.td} ${lb.statCol}`} />)}
-                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{agg.d}</td>)}
+                {showTotals && (<td className={`${lb.td} ${lb.statCol}`} style={{ textAlign: 'right', fontWeight: 700 }}>{Math.round(avg.d)}</td>)}
                 {hasAverages && (<td className={`${lb.td} ${lb.statCol}`} />)}
               </tr>
             </tfoot>
@@ -289,4 +311,3 @@ export default function HelldiversLeaderboard({ initialData }: { initialData: Le
     </div>
   );
 }
-
