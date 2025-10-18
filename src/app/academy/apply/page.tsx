@@ -385,6 +385,28 @@ export default function ApplyPage() {
     <div className={base.wrapper}>
       <div className={base.dividerLayer} />
       <div className={base.pageContainer}>
+        {/* Hero */}
+        <div className={styles.hero}>
+          <div className={styles.heroInner}>
+            <div>
+              <h1 className={styles.heroTitle}>Apply to the Mod Team</h1>
+              <p className={styles.heroSubtitle}>
+                Keep comms clear, morale high, and missions efficient. Moderators set the tone for
+                Managed Democracy—on and off the field. Short answers now; we’ll dig deeper in a brief interview.
+              </p>
+              <div className={styles.steps}>
+                <div className={styles.step}><strong>1.</strong> Apply</div>
+                <div className={styles.step}><strong>2.</strong> Interview</div>
+                <div className={styles.step}><strong>3.</strong> Trial Run</div>
+              </div>
+              <div className={styles.heroCtaRow}>
+                <a href="#application" className={styles.heroCta}>Start Application</a>
+                <a href="#readiness" className={`${styles.heroCta} ${styles.ghost}`}>Check Readiness</a>
+              </div>
+            </div>
+            {/* Optional hero media can go here */}
+          </div>
+        </div>
         <section className={base.section}>
           {/* --- INTRO (LEFT) + QUIZ (RIGHT) --- */}
           <div className={styles.introAndQuizRow}>
@@ -411,7 +433,7 @@ export default function ApplyPage() {
           </div>
 
           {/* RIGHT: Readiness Quiz */}
-          <aside className={styles.quizSide}>
+          <aside id="readiness" className={styles.quizSide}>
             <div className={`${base.subsectionCard} ${styles.quizSideCard}`}>
               <div className={styles.modQuizHeader}>
                 <h3 className={base.subHeading}>Moderator Readiness — 25-Question Scenario Quiz</h3>

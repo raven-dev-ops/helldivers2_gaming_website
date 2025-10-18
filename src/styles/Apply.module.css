@@ -1,3 +1,42 @@
+/* Hero */
+.hero {
+  position: relative;
+  border: 1px solid var(--color-border);
+  background:
+    radial-gradient(1000px 500px at 10% -10%, rgba(250,204,21,.12), transparent 60%),
+    radial-gradient(800px 400px at 110% 0%, rgba(37,99,235,.10), transparent 60%),
+    var(--color-surface);
+  border-radius: .75rem;
+  padding: 1.25rem 1.25rem 1rem;
+  box-shadow: 0 10px 24px rgba(0,0,0,.10);
+  margin-bottom: 1rem;
+}
+.heroInner { display: grid; grid-template-columns: 1fr; gap: 1rem; align-items: center; }
+@media (min-width: 980px){ .heroInner { grid-template-columns: 1.15fr .85fr; gap: 1.25rem; } }
+.heroTitle { font-size: clamp(1.6rem, 3vw, 2rem); font-weight: 800; color: var(--color-text-primary); margin: .25rem 0; }
+.heroSubtitle { color: var(--color-text-secondary); line-height: 1.7; max-width: 62ch; }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .5rem; margin-top: .75rem; }
+.step {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: .6rem;
+  padding: .6rem .75rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+.step strong { color: var(--color-primary); }
+.heroCtaRow { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.heroCta {
+  padding: .6rem 1rem;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: 1px solid transparent;
+  border-radius: .6rem;
+  font-weight: 700;
+}
+.ghost {}
+.heroCta.ghost { background: transparent; color: var(--color-text-primary); border-color: var(--color-border); }
+
 /* Two-column layout: form left, video+prompts right */
 .applyTwoCol {
     display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; margin-top: 1.25rem;
@@ -68,6 +107,19 @@
   .promptText { color: var(--color-text-primary); font-size: 1rem; line-height: 1.6; }
   .promptHint { margin-top: .4rem; color: var(--color-text-muted); font-size: .85rem; }
   
+  /* Intro + Quiz row */
+  .introAndQuizRow { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  @media (min-width: 980px){ .introAndQuizRow { grid-template-columns: 1.05fr .95fr; gap: 1.25rem; } }
+  .introBlock {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: .75rem;
+    padding: 1rem;
+  }
+  .quizSide {}
+  .quizSideCard { border-radius: .75rem; }
+  .tipsList { list-style: disc; padding-left: 1.25rem; color: var(--color-text-secondary); }
+
   /* Badges */
   .badgeRow {
     display: flex; flex-wrap: wrap; gap: .6rem; margin: .35rem 0 .75rem;

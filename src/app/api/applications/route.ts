@@ -64,54 +64,44 @@ export async function POST(request: Request) {
     await app.save();
 
     const webhookUrl = process.env.DISCORD_APPLICATION_WEBHOOK_URL;
+    const webhookUsername = process.env.DISCORD_APPLICATION_WEBHOOK_USERNAME?.trim();
+    const webhookAvatarUrl = process.env.DISCORD_APPLICATION_WEBHOOK_AVATAR_URL?.trim();
+    const webhookThreadId = process.env.DISCORD_APPLICATION_WEBHOOK_THREAD_ID?.trim();
 
     if (webhookUrl) {
       try {
         logger.info('Sending application webhook');
 
         const applicant = session?.user?.name || 'Unknown user';
-        let content = `Application submitted successfully!`;
+        const truncate = (s: string, max: number) => (s.length > max ? s.slice(0, Math.max(0, max - 1)) + '…' : s);
+        const asBlock = (s: string, max: number) => '```\n' + truncate(s, max) + '\n```';
 
-        const embedFields: Array<{ name: string; value: string; inline: boolean }> = [
+        const embedFields: Array<{ name: string; value: string; inline?: boolean }> = [
           { name: 'Type', value: type, inline: true },
-          { name: 'Interest', value: interest, inline: true },
         ];
-
-        if (about) {
-          embedFields.push({
-            name: 'About',
-            value: about.length > 1024 ? about.slice(0, 1021) + '…' : about,
-            inline: false,
-          });
-        }
 
         if (interviewAvailability) {
           const interviewUnix = Math.floor(interviewAvailability.getTime() / 1000);
-          const interviewPretty = format(
-            interviewAvailability,
-            "EEEE, MMMM d, yyyy 'at' h:mm a"
-          );
-          const interviewDisplay = `<t:${interviewUnix}:F> (${interviewPretty})`;
-
-          // Add a friendly line to the plain content too
-          content += ` Interview target: ${interviewPretty}.`;
-
-          embedFields.push({
-            name: 'Interview Target',
-            value: interviewDisplay,
-            inline: false,
-          });
+          const interviewPretty = format(interviewAvailability, "EEE, MMM d, yyyy h:mm a");
+          embedFields.push({ name: 'Interview', value: `<t:${interviewUnix}:F> (${interviewPretty})`, inline: true });
         }
+
+        embedFields.push({ name: 'Interest', value: asBlock(interest, 1000) });
+        if (about) embedFields.push({ name: 'About', value: asBlock(about, 1000) });
 
         await postToDiscord(
           {
-            content,
+            username: webhookUsername || undefined,
+            avatar_url: webhookAvatarUrl || undefined,
+            thread_id: webhookThreadId || undefined,
+            content: 'New application received.',
             embeds: [
               {
-                title: 'Application Submitted',
-                description: `Applicant: **${applicant}**`,
-                color: 0x00b894,
+                title: 'Moderator Application',
+                description: `Applicant: **${applicant}**\nApplication ID: \`${String(app._id)}\``,
+                color: 0xfacc15,
                 timestamp: new Date().toISOString(),
+                footer: { text: 'Mod Academy • via website' },
                 fields: embedFields,
               },
             ],
@@ -137,3 +127,4 @@ export async function POST(request: Request) {
     );
   }
 }
+
