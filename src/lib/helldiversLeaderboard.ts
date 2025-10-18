@@ -140,7 +140,22 @@ export async function fetchHelldiversLeaderboard(options?: {
           $toDouble: {
             $ifNull: [
               { $getField: { field: 'Strats Used', input: '$$ROOT' } },
-              0,
+              {
+                $ifNull: [
+                  { $getField: { field: 'Stratagems Used', input: '$$ROOT' } },
+                  {
+                    $ifNull: [
+                      { $getField: { field: 'Stratagems', input: '$$ROOT' } },
+                      {
+                        $ifNull: [
+                          { $getField: { field: 'StratsUsed', input: '$$ROOT' } },
+                          0,
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
             ],
           },
         },
@@ -747,7 +762,12 @@ export async function fetchHelldiversLeaderboard(options?: {
         Deaths: doc.Deaths ?? 0,
         MeleeKills: doc.MeleeKills ?? doc['Melee Kills'] ?? 0,
         StimsUsed: doc.StimsUsed ?? doc['Stims Used'] ?? 0,
-        StratsUsed: doc.StratsUsed ?? doc['Strats Used'] ?? 0,
+        StratsUsed:
+          doc.StratsUsed ??
+          doc['Strats Used'] ??
+          doc['Stratagems Used'] ??
+          doc['Stratagems'] ??
+          0,
         discord_id: doc.discord_id || null,
         discord_server_id: doc.discord_server_id || null,
         clan_name: doc.clan_name || '',
@@ -804,7 +824,12 @@ export async function fetchHelldiversLeaderboard(options?: {
       Deaths: doc.Deaths ?? 0,
       MeleeKills: doc.MeleeKills ?? doc['Melee Kills'] ?? 0,
       StimsUsed: doc.StimsUsed ?? doc['Stims Used'] ?? 0,
-      StratsUsed: doc.StratsUsed ?? doc['Strats Used'] ?? 0,
+      StratsUsed:
+        doc.StratsUsed ??
+        doc['Strats Used'] ??
+        doc['Stratagems Used'] ??
+        doc['Stratagems'] ??
+        0,
       discord_id: doc.discord_id || null,
       discord_server_id: doc.discord_server_id || null,
       clan_name: doc.clan_name || '',
