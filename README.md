@@ -2,6 +2,8 @@
 
 This is the repository for the Galactic Phantom Division website. It is a Next.js application built with TypeScript and styled-components, featuring user authentication with NextAuth.js and MongoDB.
 
+This project is proprietary and not open source. Forks (including private forks) are not permitted. Please read the LICENSE file and the **License & Usage** section below before using any of the code or assets.
+
 ## Recent Updates
 
 - Centered navigation bar text and added Super Store link under the Intel menu.
@@ -45,7 +47,7 @@ All commands below assume pnpm.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/helldivers2_clan_website.git
+   git clone https://github.com/raven-dev-ops/helldivers2_clan_website.git
    cd helldivers2_clan_website
    ```
 2. Install dependencies:
@@ -140,3 +142,12 @@ pnpm start
 ```
 
 Ensure that the same environment variables are configured in your hosting environment.
+
+## License & Usage
+
+This project is proprietary to raven-dev-ops and the Galactic Phantom Division. All rights are reserved unless explicitly granted in writing.
+
+- You may view this repository on GitHub and clone it for limited, personal, non-commercial local evaluation only.
+- You may not create public or private forks, mirrored repositories, or otherwise host this code under your own account or organization without prior written permission from raven-dev-ops.
+- You may not publicly host, redistribute, rebrand, or reuse any part of the code, assets, or branding from this repository in your own projects, services, or communities without prior written permission from raven-dev-ops.
+- See the `LICENSE` file in this repository for the full license text and terms.

@@ -1,0 +1,30 @@
+Copyright (c) 2025 raven-dev-ops
+All rights reserved.
+
+This repository, including all source code, configuration, assets, text, and media files (the "Project"),
+is proprietary and confidential to raven-dev-ops and the Galactic Phantom Division.
+
+Except as expressly permitted below or in a separate written agreement signed by raven-dev-ops, you may NOT:
+
+- use the Project, in whole or in part, in any public or production deployment;
+- copy, modify, merge, translate, adapt, or create derivative works based on the Project;
+- publish, redistribute, sublicense, sell, or otherwise transfer the Project or any portion of it; or
+- remove or alter any copyright, trademark, or proprietary notices.
+
+You are permitted to:
+
+- view this repository on GitHub;
+- clone it solely for limited, personal, non-commercial local evaluation (no public or private forks or mirrored repositories); and
+- use it to prepare and submit contributions (for example, via issues or patches) back to this repository, without publishing your own fork.
+
+Any contributions you intentionally submit to this repository are provided under a perpetual, worldwide,
+royalty-free license to raven-dev-ops to use, modify, and redistribute those contributions as part of the Project.
+
+This license does not grant you any rights to use the Galactic Phantom Division name, logos, branding, or related
+artwork in your own projects, services, communities, or publications without prior written permission.
+
+THE PROJECT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL
+THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE PROJECT OR THE USE OR OTHER
+DEALINGS IN THE PROJECT.
