@@ -28,7 +28,7 @@
     "mongodb": "^5.9.2",
     "mongoose": "^8.3.4",
     "next": "^15.4.7",
-    "next-auth": "^4.24.11",
+    "next-auth": "^4.24.12",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-easy-crop": "^5.0.8",
