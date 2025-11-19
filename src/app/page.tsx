@@ -138,6 +138,19 @@ export default function HelldiversPage() {
 
           {/* === Reviews Section (Bottom) === */}
           <ReviewsRotator reviews={reviews} />
+
+          {/* === Project Tasks Section === */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Project Documentation Tasks</h2>
+            <p className={styles.paragraph}>
+              Remaining docs to draft for this project:
+            </p>
+            <ul className={styles.paragraph}>
+              <li>[ ] Create <code>timeline.md</code> (project history & key milestones)</li>
+              <li>[ ] Create <code>roadmap.md</code> (upcoming features & priorities)</li>
+              <li>[x] Create <code>wiki.md</code> (top-level project wiki overview)</li>
+            </ul>
+          </section>
         </div>
       </div>
     </>
